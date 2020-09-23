@@ -1,70 +1,61 @@
 import { defAtom, defCursor, defView } from '@thi.ng/atom';
 import { resetIn } from '@thi.ng/paths';
 import { start } from '@thi.ng/hdom';
-import { capitalize } from '@thi.ng/strings';
-
-const a = defAtom(23);
-
-console.log('a.deref()', a.deref());
+import { aplPlacePiece, boardsToGridArray } from './apl';
+import { gridIndexToAplIndex, startingBoard } from './utility';
 
 const db = defAtom({
   phase: 'phase1',
-  t1: [1, 2, 3],
-  wb: [0, 0, 1],
-  bb: [1, 0, 0],
-  board: [],
+  boards: {
+    white: startingBoard,
+    black: startingBoard,
+  },
   turn: 'white',
 });
 const phase = defCursor(db, 'phase');
+const turn = defCursor(db, 'turn');
+const boardsCursor = defCursor(db, 'boards');
 
 const advanceToPhase2 = () => {
-  console.log('advanceToPhase2')
   phase.reset('phase2');
 };
 const returnToPhase1 = () => {
-  console.log('returnToPhase1')
   phase.reset('phase1');
 };
-
-const placePiece = () => {
-  console.log('placePiece()');
+const changeTurn = () => {
+  turn.reset(turn.deref() === 'white' ? 'black' : 'white');
 };
 
-const t1 = defView(db, ['t1'], (x) => {
-  console.log('t1', x);
-  return x;
-});
-const t1cursor = defCursor(db, ['t1']);
+const boardsView = defView(db, ['boards'], (boards) => [
+  'div.grid',
+  boardsToGridArray(boards).map((x, i) => {
+    const aplIndex = gridIndexToAplIndex[i];
+    const pieceAtPoint = x === 1 ? 'w' : x === 2 ? 'b' : '';
 
-const updateT1 = () => {
-  console.log('updateT1()', t1);
-  // a.deref();
-  const add = (x, y) => x + y;
-  a.swap(add, 1);
-  t1cursor.reset([5, 6, 7]);
-};
+    return typeof aplIndex !== 'undefined'
+      ? [
+          'span.point',
+          {
+            onclick: () => {
+              if (!pieceAtPoint) {
+                const currentTurn = turn.deref();
+                boardsCursor.resetIn(
+                  currentTurn,
+                  aplPlacePiece(currentTurn, boards[currentTurn], aplIndex)
+                );
+                changeTurn();
+              }
+            },
+          },
+          ['span.inner', pieceAtPoint],
+        ]
+      : ['span', ''];
+  }),
+]);
 
-const uiViews = {
-  phase1: () => [
-    'div',
-    ['h1', 'nmm'],
-    // ['h2', `a, ${db.phase.deref()}!`],
-    ['button', { onclick: updateT1 }, 'updateT1'],
-    ['button', { onclick: advanceToPhase2 }, 'advanceToPhase2'],
-  ],
-  phase2: () => [
-    'div',
-    ['h1', 'phase2'],
-    ['button', { onclick: updateT1 }, 'updateT1'],
-    ['button', { onclick: returnToPhase1 }, 'returnToPhase1'],
-  ],
-};
-
-const currView = defView(
-  db,
-  ['phase'],
-  (phase) =>
-    uiViews[phase] || ['div', ['h1', `No component for phase: ${phase}`]]
-);
-
-start(() => ['div', currView]);
+start(() => [
+  'div.app-inner',
+  ['h1.title', 'mill'],
+  boardsView,
+  ['p.turn', 'turn: ', turn.deref()],
+]);

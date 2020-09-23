@@ -1,6 +1,6 @@
 {
-  "name": "thing-test-2",
-  "version": "1.0.0",
+  "name": "mill-js",
+  "version": "0.9.0",
   "main": "index.js",
   "license": "MIT",
   "scripts": {
