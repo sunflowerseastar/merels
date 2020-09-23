@@ -1175,6 +1175,11 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
+apl@^0.1.15:
+  version "0.1.15"
+  resolved "https://registry.yarnpkg.com/apl/-/apl-0.1.15.tgz#3cdf98d0e253b20e278a88d8784e45126a41e9db"
+  integrity sha1-PN+Y0OJTsg4niojYeE5FEmpB6ds=
+
 argparse@^1.0.7:
   version "1.0.10"
   resolved "https://registry.yarnpkg.com/argparse/-/argparse-1.0.10.tgz#bcd6791ea5ae09725e17e5ad988134cd40b3d911"
