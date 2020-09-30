@@ -1,29 +1,26 @@
 import { defAtom, defCursor, defView } from '@thi.ng/atom';
 import { resetIn } from '@thi.ng/paths';
 import { start } from '@thi.ng/hdom';
-import { aplPlacePiece, boardsToGridArray } from './apl';
+import { aplPlacePiece, aplRemovePiece, boardsToGridArray } from './apl';
 import { gridIndexToAplIndex, startingBoard } from './utility';
 
 const db = defAtom({
   phase: 'phase1',
   boards: {
-    white: startingBoard,
-    black: startingBoard,
+    w: startingBoard,
+    b: startingBoard,
   },
-  turn: 'white',
+  turn: 'w',
+  action: 'place',
 });
 const phase = defCursor(db, 'phase');
 const turn = defCursor(db, 'turn');
+const opponent = defView(db, 'turn', (x) => (x === 'w' ? 'b' : 'w'));
+const action = defCursor(db, 'action');
 const boardsCursor = defCursor(db, 'boards');
 
-const advanceToPhase2 = () => {
-  phase.reset('phase2');
-};
-const returnToPhase1 = () => {
-  phase.reset('phase1');
-};
 const changeTurn = () => {
-  turn.reset(turn.deref() === 'white' ? 'black' : 'white');
+  turn.reset(opponent.deref());
 };
 
 const boardsView = defView(db, ['boards'], (boards) => [
@@ -37,12 +34,30 @@ const boardsView = defView(db, ['boards'], (boards) => [
           'span.point',
           {
             onclick: () => {
-              if (!pieceAtPoint) {
-                const currentTurn = turn.deref();
+              const currentTurn = turn.deref();
+              const currentAction = action.deref();
+              const currentOpponent = opponent.deref();
+              const clickedOnOpponent = pieceAtPoint === currentOpponent;
+
+              if (currentAction === 'place' && !pieceAtPoint) {
                 boardsCursor.resetIn(
                   currentTurn,
-                  aplPlacePiece(currentTurn, boards[currentTurn], aplIndex)
+                  aplPlacePiece(boards[currentTurn], aplIndex)
                 );
+
+                // TODO logic
+                const anyNewMillsCreated = Math.random() > 0.8;
+                if (anyNewMillsCreated) {
+                  action.reset('remove');
+                } else {
+                  changeTurn();
+                }
+              } else if (currentAction === 'remove' && clickedOnOpponent) {
+                boardsCursor.resetIn(
+                  currentOpponent,
+                  aplRemovePiece(boards[currentOpponent], aplIndex)
+                );
+                action.reset('place');
                 changeTurn();
               }
             },
@@ -57,5 +72,9 @@ start(() => [
   'div.app-inner',
   ['h1.title', 'mill'],
   boardsView,
-  ['p.turn', 'turn: ', turn.deref()],
+  [
+    'div.info',
+    ['p.turn', 'turn: ', turn.deref()],
+    ['p.action', 'action: ', action.deref()],
+  ],
 ]);

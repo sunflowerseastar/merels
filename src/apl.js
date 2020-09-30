@@ -84,10 +84,7 @@ export const aplToJs = (aplResult) => {
 
 const apl = (input) => aplToJs(libraryApl(input));
 
-export const aplPlacePiece = (currentTurn, board, aplIndex) =>
-  apl(`b ← ${board} \n b[${aplIndex}] ← 1`);
-
-const boardsToGridInput = ({ black, white }) => `
+const boardsToGridInput = ({ b, w }) => `
 pb1←1 0 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 0 1
 pb2←0 0 0 0 0 0 0 0 1 0 1 0 1 0 0 0 0 0 0 0 0 0 1 0 1 0 1 0 0 0 0 0 0 0 0 0 1 0 1 0 1 0 0 0 0 0 0 0 0
 pb3←0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 1 1 1 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
@@ -95,14 +92,14 @@ s1←{9↑⍵}
 s2←{9↑9↓⍵}
 s3←{18↓⍵}
 
-w←${white}
+w←${w}
 ws1←pb1 \\ (s1 w)
 ws2←pb2 \\ (s2 w)
 ws3←pb3 \\ (s3 w)
 
 combinedwhite ← ws1 ∨ ws2 ∨ ws3
 
-b←${black}
+b←${b}
 bs1←pb1 \\ (s1 b)
 bs2←pb2 \\ (s2 b)
 bs3←pb3 \\ (s3 b)
@@ -114,3 +111,9 @@ finalboard ← combinedwhite ∨ combinedblack
 `;
 
 export const boardsToGridArray = (boards) => apl(boardsToGridInput(boards));
+
+export const aplPlacePiece = (board, aplIndex) =>
+  apl(`b ← ${board} \n b[${aplIndex}] ← 1`);
+
+export const aplRemovePiece = (board, aplIndex) =>
+  apl(`b ← ${board} \n b[${aplIndex}] ← 0`);
