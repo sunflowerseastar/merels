@@ -1,7 +1,12 @@
 import { defAtom, defCursor, defView } from '@thi.ng/atom';
 import { resetIn } from '@thi.ng/paths';
 import { start } from '@thi.ng/hdom';
-import { aplPlacePiece, aplRemovePiece, boardsToGridArray, getNumberOfMills } from './apl';
+import {
+  aplPlacePiece,
+  aplRemovePiece,
+  boardsToGridArray,
+  getNumberOfMills,
+} from './apl';
 import { gridIndexToAplIndex, startingBoard } from './utility';
 
 const db = defAtom({
@@ -22,8 +27,8 @@ const turn = defCursor(db, 'turn');
 const opponent = defView(db, 'turn', (x) => (x === 'w' ? 'b' : 'w'));
 const action = defCursor(db, 'action');
 const boardsCursor = defCursor(db, 'boards');
-const millCount = defView(db, ['numberOfMills'])
-// console.log('millCount', millCount.deref());
+const millCursor = defCursor(db, ['numberOfMills']);
+const millCount = defView(db, ['numberOfMills']);
 
 const changeTurn = () => {
   turn.reset(opponent.deref());
@@ -46,33 +51,25 @@ const boardsView = defView(db, ['boards'], (boards) => [
               const clickedOnOpponent = pieceAtPoint === currentOpponent;
 
               if (currentAction === 'place' && !pieceAtPoint) {
-                const newBoard = aplPlacePiece(boards[currentTurn], aplIndex)
-                boardsCursor.resetIn(
-                  currentTurn,
-                  newBoard
-                );
+                const newBoard = aplPlacePiece(boards[currentTurn], aplIndex);
+                boardsCursor.resetIn(currentTurn, newBoard);
 
-                // TODO logic
-                // const anyNewMillsCreated = Math.random() > 0.8;
-                const anyNewMillsCreated = false
+                const previousNumberOfMills = millCount.deref()[currentTurn];
+                const newNumberOfMills = getNumberOfMills(newBoard);
 
-                const currentNumberOfMills = millCount.deref()
-                // const numberOfMills = getNumberOfMills(boards[currentTurn])
-                const numberOfMillsx = getNumberOfMills(newBoard)
-                // console.log('currentNumberOfMills', currentNumberOfMills);
-                // console.log('numberOfMills', numberOfMills);
-                // console.log('numberOfMillsx', numberOfMillsx);
-
-                if (anyNewMillsCreated) {
+                if (newNumberOfMills > previousNumberOfMills) {
                   action.reset('remove');
+                  millCursor.resetIn(currentTurn, newNumberOfMills);
                 } else {
                   changeTurn();
                 }
               } else if (currentAction === 'remove' && clickedOnOpponent) {
-                boardsCursor.resetIn(
-                  currentOpponent,
-                  aplRemovePiece(boards[currentOpponent], aplIndex)
+                const newBoard = aplRemovePiece(
+                  boards[currentOpponent],
+                  aplIndex
                 );
+                boardsCursor.resetIn(currentOpponent, newBoard);
+                millCursor.resetIn(currentOpponent, getNumberOfMills(newBoard));
                 action.reset('place');
                 changeTurn();
               }
