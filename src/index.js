@@ -73,6 +73,9 @@ const boardsView = defView(db, ['boards'], (boards) => [
                 action.reset('place');
                 changeTurn();
               }
+
+              // TODO check number of pieces for each player
+              // TODO determine if advance to phase 2 or phase 3 or win/loss
             },
           },
           ['span.inner', pieceAtPoint],
