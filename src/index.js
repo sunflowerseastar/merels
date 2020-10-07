@@ -1,7 +1,7 @@
 import { defAtom, defCursor, defView } from '@thi.ng/atom';
 import { resetIn } from '@thi.ng/paths';
 import { start } from '@thi.ng/hdom';
-import { aplPlacePiece, aplRemovePiece, boardsToGridArray } from './apl';
+import { aplPlacePiece, aplRemovePiece, boardsToGridArray, getNumberOfMills } from './apl';
 import { gridIndexToAplIndex, startingBoard } from './utility';
 
 const db = defAtom({
@@ -9,6 +9,10 @@ const db = defAtom({
   boards: {
     w: startingBoard,
     b: startingBoard,
+  },
+  numberOfMills: {
+    w: 0,
+    b: 0,
   },
   turn: 'w',
   action: 'place',
@@ -18,6 +22,8 @@ const turn = defCursor(db, 'turn');
 const opponent = defView(db, 'turn', (x) => (x === 'w' ? 'b' : 'w'));
 const action = defCursor(db, 'action');
 const boardsCursor = defCursor(db, 'boards');
+const millCount = defView(db, ['numberOfMills'])
+// console.log('millCount', millCount.deref());
 
 const changeTurn = () => {
   turn.reset(opponent.deref());
@@ -40,13 +46,23 @@ const boardsView = defView(db, ['boards'], (boards) => [
               const clickedOnOpponent = pieceAtPoint === currentOpponent;
 
               if (currentAction === 'place' && !pieceAtPoint) {
+                const newBoard = aplPlacePiece(boards[currentTurn], aplIndex)
                 boardsCursor.resetIn(
                   currentTurn,
-                  aplPlacePiece(boards[currentTurn], aplIndex)
+                  newBoard
                 );
 
                 // TODO logic
-                const anyNewMillsCreated = Math.random() > 0.8;
+                // const anyNewMillsCreated = Math.random() > 0.8;
+                const anyNewMillsCreated = false
+
+                const currentNumberOfMills = millCount.deref()
+                // const numberOfMills = getNumberOfMills(boards[currentTurn])
+                const numberOfMillsx = getNumberOfMills(newBoard)
+                // console.log('currentNumberOfMills', currentNumberOfMills);
+                // console.log('numberOfMills', numberOfMills);
+                // console.log('numberOfMillsx', numberOfMillsx);
+
                 if (anyNewMillsCreated) {
                   action.reset('remove');
                 } else {
