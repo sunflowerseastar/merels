@@ -45,15 +45,13 @@ export const aplRemovePiece = (board, aplIndex) =>
 
 export const getNumberOfMills = (board) =>
   apl(`
-b ← 3 3 3⍴${board}
-squares ← {(⍵[0;;])(⍵[1;;])(⍵[2;;])}
+squares ← ⊂[1 2] 3 3 3⍴${board}
 
 intralines ← {(⍵[0;])(⍵[;0])(⍵[;2])(⍵[2;])}
-flatten ← {⊃,/⍵}
-numintramills ← +/ ∧/ ¨ flatten intralines ¨ squares b
+numintramills ← +/ ∧/ ¨ ⊃,/ intralines ¨ squares
 
 interlines ← {(⍵[0;1])(⍵[1;0])(⍵[1;2])(⍵[2;1])}
-numintermills ← +/ ⊃ ∧/ interlines ¨ squares b
+numintermills ← +/ ⊃ ∧/ interlines ¨ squares
 
-nummills ← +/ numintramills numintermills
+nummills ← numintramills + numintermills
 `)[0];
