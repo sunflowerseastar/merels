@@ -6,16 +6,25 @@ import {
   aplRemovePiece,
   boardsToGridArray,
   getNumberOfMills,
+  getNumberOfPieces,
 } from './apl';
 import { gridIndexToAplIndex, startingBoard } from './utility';
 
 const db = defAtom({
-  phase: 'phase1',
+  phase: 1,
   boards: {
     w: startingBoard,
     b: startingBoard,
   },
   numberOfMills: {
+    w: 0,
+    b: 0,
+  },
+  numberOfPiecesOnBoard: {
+    w: 0,
+    b: 0,
+  },
+  numberOfPiecesPlaced: {
     w: 0,
     b: 0,
   },
@@ -28,6 +37,8 @@ const opponent = defView(db, 'turn', (x) => (x === 'w' ? 'b' : 'w'));
 const action = defCursor(db, 'action');
 const boardsCursor = defCursor(db, 'boards');
 const millCursor = defCursor(db, ['numberOfMills']);
+const numPiecesOnBoardCursor = defCursor(db, ['numberOfPiecesOnBoards']);
+const numPiecesPlacedCursor = defCursor(db, ['numberOfPiecesPlaced']);
 const millCount = defView(db, ['numberOfMills']);
 
 const changeTurn = () => {
@@ -49,10 +60,15 @@ const boardsView = defView(db, ['boards'], (boards) => [
               const currentAction = action.deref();
               const currentOpponent = opponent.deref();
               const clickedOnOpponent = pieceAtPoint === currentOpponent;
+              const previousNumberOfPiecesOnBoard = numPiecesOnBoardCursor.deref();
 
               if (currentAction === 'place' && !pieceAtPoint) {
                 const newBoard = aplPlacePiece(boards[currentTurn], aplIndex);
                 boardsCursor.resetIn(currentTurn, newBoard);
+
+                const q = numPiecesPlacedCursor.deref()[currentTurn] + 1
+
+                numPiecesPlacedCursor.resetIn(currentTurn, q);
 
                 const previousNumberOfMills = millCount.deref()[currentTurn];
                 const newNumberOfMills = getNumberOfMills(newBoard);
@@ -75,7 +91,33 @@ const boardsView = defView(db, ['boards'], (boards) => [
               }
 
               // TODO check number of pieces for each player
+              const bx = boardsCursor.deref()
+              console.log('bx', bx);
+              const numCurrent = getNumberOfPieces(bx[currentTurn])
+              const numOpponent = getNumberOfPieces(bx[currentOpponent])
+              console.log('numCurrent', numCurrent);
+              console.log('numOpponent', numOpponent);
+              numPiecesOnBoardCursor.resetIn(currentTurn, getNumberOfPieces(bx[currentTurn]));
+              numPiecesOnBoardCursor.resetIn(currentOpponent, getNumberOfPieces(bx[currentOpponent]));
               // TODO determine if advance to phase 2 or phase 3 or win/loss
+
+              const currentPhase = phase.deref()
+              console.log('currentPhase', currentPhase);
+
+              const currentNumPlaced = numPiecesPlacedCursor.deref()
+              console.log('currentNumPlaced', currentNumPlaced);
+
+              if (currentPhase === 1 && currentNumPlaced['w'] >= 9 && currentNumPlaced['b'] >= 9) {
+                console.log('yes advance to phase 2!!')
+                phase.reset(2)
+              } else {
+                console.log('no stay in phase 1')
+              }
+
+              if (currentPhase === 2) {
+                console.log('yep in phase 2')
+              }
+
             },
           },
           ['span.inner', pieceAtPoint],

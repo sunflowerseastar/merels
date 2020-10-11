@@ -55,3 +55,5 @@ numintermills ← +/ ⊃ ∧/ interlines ¨ squares
 
 nummills ← numintramills + numintermills
 `)[0];
+
+export const getNumberOfPieces = (board) => apl(`+/${board}`)[0];
