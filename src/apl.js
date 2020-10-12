@@ -38,7 +38,10 @@ finalboard ← combinedwhite ∨ combinedblack
 export const boardsToGridArray = (boards) => apl(boardsToGridInput(boards));
 
 export const aplPlacePiece = (board, aplIndex) =>
-  apl(`b ← ${board} \n b[${aplIndex}] ← 1`);
+apl(`b ← ${board} \n b[${aplIndex}] ← 1`);
+
+export const aplPlaceAndRemovePiece = (board, aplPlaceIndex, aplRemoveIndex) =>
+  apl(`b ← ${board} \n b[${aplPlaceIndex}] ← 1 \n b[${aplRemoveIndex}] ← 0`);
 
 export const aplRemovePiece = (board, aplIndex) =>
   apl(`b ← ${board} \n b[${aplIndex}] ← 0`);

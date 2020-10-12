@@ -69,5 +69,24 @@ export const boardDbAtPhase2 = {
   numberOfPiecesPlaced: {w: 9, b: 8,},
   turn: 'b',
   action: 'place',
-  numberOfPiecesOnBoards: {w: 9, b: 8,},
+  isFlying: {w: false, b: false,},
+  feedback: '',
+  liftedAplIndex: null,
+  possiblePlaces: [],
 };
+
+export const boardDbBeforePhase3 = {
+  "phase": 2,
+  "boards": {
+    "w": [1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    "b": [0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]},
+  "numberOfMills": {"w": 0, "b": 2},
+  "numberOfPiecesOnBoard": {"w": 0, "b": 0},
+  "numberOfPiecesPlaced": {"w": 9, "b": 9},
+  "turn": "b",
+  "action": "lift",
+  isFlying: {w: false, b: false,},
+  "feedback": "",
+  "possiblePlaces": [],
+  "liftedAplIndex": null
+}
