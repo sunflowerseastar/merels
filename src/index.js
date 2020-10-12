@@ -43,8 +43,7 @@ const initialDb = {
   action: 'place',
 };
 
-// const db = defAtom(initialDb);
-const db = defAtom(boardDbBeforePhase3);
+const db = defAtom(initialDb);
 
 const action = defCursor(db, 'action');
 const boardsCursor = defCursor(db, 'boards');
@@ -60,8 +59,6 @@ const possiblePlaces = defCursor(db, 'possiblePlaces');
 const turn = defCursor(db, 'turn');
 
 const checkAdvanceToPhase2 = () => {
-  console.log('checkAdvanceToPhase2()');
-
   const currentNumPlaced = numPiecesPlacedCursor.deref();
   const currentOpponent = opponent.deref();
   const currentPhase = phase.deref();
@@ -81,29 +78,45 @@ const checkAdvanceToPhase2 = () => {
 
   // check to see if we should advance from phase 2 to phase 3
   if (currentPhase === 2) {
-    // console.log('yep in phase 2');
-
     const board = boardsCursor.deref();
     const numberOfPiecesOpponent = getNumberOfPieces(board[currentOpponent]);
     const numberOfPiecesCurrentTurn = getNumberOfPieces(board[currentTurn]);
-    console.log('currentTurn, currentOpponent', currentTurn, currentOpponent);
-    console.log(
-      'numberOfPiecesOpponent,numberOfPiecesCurrentTurn',
-      numberOfPiecesOpponent,
-      numberOfPiecesCurrentTurn
-    );
 
     if (numberOfPiecesOpponent === 3) {
-      console.log('opponent should start flying');
-      isFlying.resetIn(currentOpponent, true)
+      feedback.reset(
+        `${currentOpponent === 'w' ? 'white' : 'black'} is now flying`
+      );
+      isFlying.resetIn(currentOpponent, true);
     }
+    if (numberOfPiecesOpponent === 2) {
+      feedback.reset(`${currentTurn} wins`);
+      isFlying.resetIn(currentOpponent, true);
+    }
+  }
+};
+
+const endGameOrChangeTurn = () => {
+  const currentOpponent = opponent.deref();
+  const currentPhase = phase.deref();
+  const currentTurn = turn.deref();
+  const board = boardsCursor.deref();
+  const numberOfPiecesOpponent = getNumberOfPieces(board[currentOpponent]);
+
+  if (currentPhase === 2 && numberOfPiecesOpponent === 2) {
+    feedback.reset(`${currentTurn === 'w' ? 'white' : 'black'} wins`);
+    action.reset('end');
+    turn.reset('');
+  } else {
+    console.log('change turn');
+    turn.reset(opponent.deref());
   }
 };
 
 const endTurn = () => {
   console.log('endTurn');
   checkAdvanceToPhase2();
-  turn.reset(opponent.deref());
+
+  endGameOrChangeTurn();
 };
 
 const boardsView = defView(db, ['boards'], (boards) => [
@@ -128,16 +141,25 @@ const boardsView = defView(db, ['boards'], (boards) => [
               const clickedOnOpponent = pieceAtPoint === currentOpponent;
               const clickedOnOwnPiece = pieceAtPoint === currentTurn;
 
-              if (currentPhase === 1 && currentAction === 'place' && !pieceAtPoint) {
+              if (
+                currentPhase === 1 &&
+                currentAction === 'place' &&
+                !pieceAtPoint
+              ) {
                 // update board
-                const boardAfterPlace = aplPlacePiece(boards[currentTurn], aplIndex);
+                const boardAfterPlace = aplPlacePiece(
+                  boards[currentTurn],
+                  aplIndex
+                );
                 boardsCursor.resetIn(currentTurn, boardAfterPlace);
 
                 // update numPiecesPlaced
-                numPiecesPlacedCursor.swapIn(currentTurn, x => x + 1);
+                numPiecesPlacedCursor.swapIn(currentTurn, (x) => x + 1);
 
                 // either continue or end turn depending on if there's a new mill
-                const previousNumberOfMills = getNumberOfMills(boards[currentTurn])
+                const previousNumberOfMills = getNumberOfMills(
+                  boards[currentTurn]
+                );
                 const newNumberOfMills = getNumberOfMills(boardAfterPlace);
                 if (newNumberOfMills > previousNumberOfMills) {
                   console.log('REMOVE 1');
@@ -146,15 +168,30 @@ const boardsView = defView(db, ['boards'], (boards) => [
                   console.log('ENDTURN 1');
                   endTurn();
                 }
-              } else if (currentPhase === 2 && currentAction === 'place' && !pieceAtPoint) {
-                if (isFlying.deref()[currentTurn] || possiblePlaces.deref().includes(aplIndex)) {
+              } else if (
+                currentPhase === 2 &&
+                currentAction === 'place' &&
+                !pieceAtPoint
+              ) {
+                if (
+                  isFlying.deref()[currentTurn] ||
+                  possiblePlaces.deref().includes(aplIndex)
+                ) {
                   // update board
-                  const boardAfterRemoval = aplRemovePiece(boards[currentTurn], liftedAplIndex.deref());
-                  const boardAfterPlace = aplPlacePiece(boardAfterRemoval, aplIndex);
+                  const boardAfterRemoval = aplRemovePiece(
+                    boards[currentTurn],
+                    liftedAplIndex.deref()
+                  );
+                  const boardAfterPlace = aplPlacePiece(
+                    boardAfterRemoval,
+                    aplIndex
+                  );
                   boardsCursor.resetIn(currentTurn, boardAfterPlace);
 
                   // either continue or end turn depending on if there's a new mill
-                  const previousNumberOfMills = getNumberOfMills(boardAfterRemoval);
+                  const previousNumberOfMills = getNumberOfMills(
+                    boardAfterRemoval
+                  );
                   const newNumberOfMills = getNumberOfMills(boardAfterPlace);
                   if (newNumberOfMills > previousNumberOfMills) {
                     action.reset('remove');
@@ -197,7 +234,7 @@ const boardsView = defView(db, ['boards'], (boards) => [
                 console.log('openPoints', openPoints);
 
                 if (isFlying.deref()[currentTurn]) {
-                  console.log('yep we are flying')
+                  console.log('yep we are flying');
                   action.reset('place');
                   liftedAplIndex.reset(aplIndex);
                 } else if (!!openPoints.length) {
@@ -209,9 +246,9 @@ const boardsView = defView(db, ['boards'], (boards) => [
                   feedback.reset("this piece doesn't have any available moves");
                 }
               } else {
-                console.log('clicked on "invalid" point')
+                console.log('clicked on "invalid" point');
                 if (currentPhase === 2) {
-                  action.reset('lift')
+                  action.reset('lift');
                 }
               }
             },
@@ -224,7 +261,7 @@ const boardsView = defView(db, ['boards'], (boards) => [
 
 start(() => [
   'div.app-inner',
-  ['h1.title', 'mill'],
+  ['h1.title', { onclick: () => db.reset(initialDb) }, 'mill'],
   boardsView,
   [
     'div.info',
