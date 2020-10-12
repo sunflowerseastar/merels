@@ -58,24 +58,16 @@ nummills ← numintramills + numintermills
 
 export const getNumberOfPieces = (board) => apl(`+/${board}`)[0];
 
-export const openPointsAdjacentToPiece = (board, boardOpponent, aplIndex) => {
-  console.log(
-    'openPointsAdjacentToPiece(): board, boardOpponent, aplIndex',
-    board,
-    boardOpponent,
-    aplIndex
-  );
-  // doesn't work
-  // TODO make APL return possible moves
-//   const wipentry = `
-// a ← ${board}[${aplIndex}]
-// b ← ${boardOpponent}[${aplIndex}]
-// a, b
-// `;
+export const openPointsAdjacentToPiece = (w, b, ptc) => {
   const entry = `
-123
+w ← ${w}
+b ← ${b}
+
+pointstocheck ← ${ptc}
+whiteandblackatpoint ← {w[⍵] b[⍵]}
+p3 ← whiteandblackatpoint ¨ pointstocheck
+p4 ← ~∨/ ¨ p3
+p4 / pointstocheck
 `;
-  const x = libraryApl(entry);
-  const x2 = aplToJs(x);
-  console.log('x, x2', x, x2);
+  return apl(entry);
 };
