@@ -9,13 +9,13 @@ import {
   getNumberOfPieces,
   openPointsAdjacentToPiece,
 } from './apl';
-import { gridIndexToAplIndex, startingBoard } from './utility';
+import { boardDbAtPhase2, gridIndexToAplIndex } from './utility';
 
-const db = defAtom({
+const initialDb = {
   phase: 1,
   boards: {
-    w: startingBoard,
-    b: startingBoard,
+    w: Array.from(Array(27), (_) => 0),
+    b: Array.from(Array(27), (_) => 0),
   },
   numberOfMills: {
     w: 0,
@@ -31,7 +31,10 @@ const db = defAtom({
   },
   turn: 'w',
   action: 'place',
-});
+};
+
+// const db = defAtom(initialDb);
+const db = defAtom(boardDbAtPhase2);
 const phase = defCursor(db, 'phase');
 const turn = defCursor(db, 'turn');
 const opponent = defView(db, 'turn', (x) => (x === 'w' ? 'b' : 'w'));
@@ -57,6 +60,7 @@ const boardsView = defView(db, ['boards'], (boards) => [
           'span.point',
           {
             onclick: () => {
+              console.log('db.deref()', db.deref());
               const currentAction = action.deref();
               const currentOpponent = opponent.deref();
               const currentPhase = phase.deref();

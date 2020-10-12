@@ -26,7 +26,87 @@ export const gridIndexToAplIndex = {
   48: 8,
 };
 
-export const startingBoard = Array.from(Array(27), (_) => 0);
-
 export const testWhiteBoard = [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1]
 export const testBlackBoard = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+export const boardDbAtPhase2 = {
+  "phase": 1,
+  "boards": {
+    "w": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "b": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  "numberOfMills": {
+    "w": 0,
+    "b": 0
+  },
+  "numberOfPiecesOnBoard": {
+    "w": 0,
+    "b": 0
+  },
+  "numberOfPiecesPlaced": {
+    "w": 9,
+    "b": 8
+  },
+  "turn": "b",
+  "action": "place",
+  "numberOfPiecesOnBoards": {
+    "w": 9,
+    "b": 8
+  }
+}
