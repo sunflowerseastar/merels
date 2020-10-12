@@ -7,6 +7,7 @@ import {
   boardsToGridArray,
   getNumberOfMills,
   getNumberOfPieces,
+  openPointsAdjacentToPiece,
 } from './apl';
 import { gridIndexToAplIndex, startingBoard } from './utility';
 
@@ -56,19 +57,22 @@ const boardsView = defView(db, ['boards'], (boards) => [
           'span.point',
           {
             onclick: () => {
-              const currentTurn = turn.deref();
               const currentAction = action.deref();
               const currentOpponent = opponent.deref();
-              const clickedOnOpponent = pieceAtPoint === currentOpponent;
+              const currentPhase = phase.deref();
+              const currentTurn = turn.deref();
               const previousNumberOfPiecesOnBoard = numPiecesOnBoardCursor.deref();
+
+              const clickedOnOpponent = pieceAtPoint === currentOpponent;
+              const clickedOnOwnPiece = pieceAtPoint === currentTurn;
 
               if (currentAction === 'place' && !pieceAtPoint) {
                 const newBoard = aplPlacePiece(boards[currentTurn], aplIndex);
                 boardsCursor.resetIn(currentTurn, newBoard);
 
-                const q = numPiecesPlacedCursor.deref()[currentTurn] + 1
-
-                numPiecesPlacedCursor.resetIn(currentTurn, q);
+                const newNumPiecesPlaced =
+                  numPiecesPlacedCursor.deref()[currentTurn] + 1;
+                numPiecesPlacedCursor.resetIn(currentTurn, newNumPiecesPlaced);
 
                 const previousNumberOfMills = millCount.deref()[currentTurn];
                 const newNumberOfMills = getNumberOfMills(newBoard);
@@ -88,36 +92,49 @@ const boardsView = defView(db, ['boards'], (boards) => [
                 millCursor.resetIn(currentOpponent, getNumberOfMills(newBoard));
                 action.reset('place');
                 changeTurn();
+              } else if (currentAction === 'lift' && clickedOnOwnPiece) {
+                console.log('yea lift', aplIndex);
+                const openPoints = openPointsAdjacentToPiece(
+                  boards[currentTurn],
+                  boards[currentOpponent],
+                  aplIndex
+                );
+                console.log('openPoints', openPoints);
               }
 
               // TODO check number of pieces for each player
-              const bx = boardsCursor.deref()
-              console.log('bx', bx);
-              const numCurrent = getNumberOfPieces(bx[currentTurn])
-              const numOpponent = getNumberOfPieces(bx[currentOpponent])
-              console.log('numCurrent', numCurrent);
-              console.log('numOpponent', numOpponent);
-              numPiecesOnBoardCursor.resetIn(currentTurn, getNumberOfPieces(bx[currentTurn]));
-              numPiecesOnBoardCursor.resetIn(currentOpponent, getNumberOfPieces(bx[currentOpponent]));
-              // TODO determine if advance to phase 2 or phase 3 or win/loss
+              const boardAfterMove = boardsCursor.deref();
+              const numberOfPiecesCurrent = getNumberOfPieces(
+                boardAfterMove[currentTurn]
+              );
+              const numberOfPiecesOpponent = getNumberOfPieces(
+                boardAfterMove[currentOpponent]
+              );
 
-              const currentPhase = phase.deref()
-              console.log('currentPhase', currentPhase);
+              numPiecesOnBoardCursor.reset({
+                [currentTurn]: numberOfPiecesCurrent,
+                [currentOpponent]: numberOfPiecesOpponent,
+              });
 
-              const currentNumPlaced = numPiecesPlacedCursor.deref()
-              console.log('currentNumPlaced', currentNumPlaced);
+              const currentNumPlaced = numPiecesPlacedCursor.deref();
 
-              if (currentPhase === 1 && currentNumPlaced['w'] >= 9 && currentNumPlaced['b'] >= 9) {
-                console.log('yes advance to phase 2!!')
-                phase.reset(2)
-              } else {
-                console.log('no stay in phase 1')
+              if (
+                currentPhase === 1 &&
+                currentNumPlaced['w'] >= 9 &&
+                currentNumPlaced['b'] >= 9
+              ) {
+                console.log('yes advance to phase 2!!');
+                action.reset('lift');
+                phase.reset(2);
               }
 
               if (currentPhase === 2) {
-                console.log('yep in phase 2')
-              }
+                console.log('yep in phase 2');
 
+                if (numberOfPiecesOpponent === 3) {
+                  console.log('opponent should start flying');
+                }
+              }
             },
           },
           ['span.inner', pieceAtPoint],
