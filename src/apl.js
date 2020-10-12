@@ -1,11 +1,11 @@
 import libraryApl from 'apl';
 import { fmt } from './aplLibrary';
 
-export const aplToJs = (aplResult) => {
-  return fmt(aplResult)[0]
+export const aplToJs = (aplResult) =>
+  fmt(aplResult)[0]
     .split(' ')
-    .map((x) => parseInt(x) || 0);
-};
+    .filter((x) => x)
+    .map((x) => parseInt(x));
 
 const apl = (input) => aplToJs(libraryApl(input));
 
