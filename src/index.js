@@ -44,6 +44,7 @@ const initialDb = {
 };
 
 const db = defAtom(initialDb);
+const blockInteractions = defAtom(false);
 
 const action = defCursor(db, 'action');
 const boardsCursor = defCursor(db, 'boards');
@@ -84,7 +85,7 @@ const checkAdvanceToPhase2 = () => {
 
     if (numberOfPiecesOpponent === 3) {
       feedback.reset(
-        `${currentOpponent === 'w' ? 'white' : 'black'} is now flying`
+        `${currentOpponent === 'w' ? 'white' : 'black'} is flying`
       );
       isFlying.resetIn(currentOpponent, true);
     }
@@ -120,7 +121,6 @@ const endTurn = () => {
 };
 
 const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
-  console.log('onClickPoint()', boards, aplIndex, pieceAtPoint)
   feedback.reset('');
 
   const currentAction = action.deref();
@@ -232,7 +232,17 @@ const boardsView = defView(db, ['boards'], (boards) => [
       ? [
           'span.point',
           {
-            onclick: () => onClickPoint(boards, aplIndex, pieceAtPoint),
+            onclick: () => {
+              if (!blockInteractions.deref()) {
+                blockInteractions.reset(true);
+
+                onClickPoint(boards, aplIndex, pieceAtPoint);
+
+                setTimeout(() => {
+                  blockInteractions.reset(false);
+                }, 0);
+              }
+            },
           },
           ['span.inner', pieceAtPoint],
         ]
