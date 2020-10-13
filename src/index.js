@@ -119,6 +119,109 @@ const endTurn = () => {
   endGameOrChangeTurn();
 };
 
+const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
+  console.log('onClickPoint()', boards, aplIndex, pieceAtPoint)
+  feedback.reset('');
+
+  const currentAction = action.deref();
+  const currentOpponent = opponent.deref();
+  const currentPhase = phase.deref();
+  const currentTurn = turn.deref();
+
+  const clickedOnOpponent = pieceAtPoint === currentOpponent;
+  const clickedOnOwnPiece = pieceAtPoint === currentTurn;
+
+  if (currentPhase === 1 && currentAction === 'place' && !pieceAtPoint) {
+    // update board
+    const boardAfterPlace = aplPlacePiece(boards[currentTurn], aplIndex);
+    boardsCursor.resetIn(currentTurn, boardAfterPlace);
+
+    // update numPiecesPlaced
+    numPiecesPlacedCursor.swapIn(currentTurn, (x) => x + 1);
+
+    // either continue or end turn depending on if there's a new mill
+    const previousNumberOfMills = getNumberOfMills(boards[currentTurn]);
+    const newNumberOfMills = getNumberOfMills(boardAfterPlace);
+    if (newNumberOfMills > previousNumberOfMills) {
+      console.log('REMOVE 1');
+      action.reset('remove');
+    } else {
+      console.log('ENDTURN 1');
+      endTurn();
+    }
+  } else if (currentPhase === 2 && currentAction === 'place' && !pieceAtPoint) {
+    if (
+      isFlying.deref()[currentTurn] ||
+      possiblePlaces.deref().includes(aplIndex)
+    ) {
+      // update board
+      const boardAfterRemoval = aplRemovePiece(
+        boards[currentTurn],
+        liftedAplIndex.deref()
+      );
+      const boardAfterPlace = aplPlacePiece(boardAfterRemoval, aplIndex);
+      boardsCursor.resetIn(currentTurn, boardAfterPlace);
+
+      // either continue or end turn depending on if there's a new mill
+      const previousNumberOfMills = getNumberOfMills(boardAfterRemoval);
+      const newNumberOfMills = getNumberOfMills(boardAfterPlace);
+      if (newNumberOfMills > previousNumberOfMills) {
+        action.reset('remove');
+      } else {
+        console.log('LIFT 1');
+        action.reset('lift');
+        console.log('ENDTURN 2');
+        endTurn();
+      }
+    } else {
+      feedback.reset('not legal move, cancel');
+      console.log('LIFT 2');
+      action.reset('lift');
+    }
+
+    liftedAplIndex.reset(null);
+    possiblePlaces.reset([]);
+  } else if (currentAction === 'remove' && clickedOnOpponent) {
+    const newBoard = aplRemovePiece(boards[currentOpponent], aplIndex);
+    boardsCursor.resetIn(currentOpponent, newBoard);
+    millCursor.resetIn(currentOpponent, getNumberOfMills(newBoard));
+    if (currentPhase === 1) {
+      action.reset('place');
+    } else {
+      console.log('LIFT 3');
+      action.reset('lift');
+    }
+    console.log('ENDTURN 3');
+    endTurn();
+  } else if (currentAction === 'lift' && clickedOnOwnPiece) {
+    const openPoints = openPointsAdjacentToPiece(
+      boards[currentTurn],
+      boards[currentOpponent],
+      connectedPointsGraph[aplIndex]
+    );
+
+    console.log('openPoints', openPoints);
+
+    if (isFlying.deref()[currentTurn]) {
+      console.log('yep we are flying');
+      action.reset('place');
+      liftedAplIndex.reset(aplIndex);
+    } else if (!!openPoints.length) {
+      console.log('PLACE 2');
+      action.reset('place');
+      possiblePlaces.reset(openPoints);
+      liftedAplIndex.reset(aplIndex);
+    } else {
+      feedback.reset("this piece doesn't have any available moves");
+    }
+  } else {
+    console.log('clicked on "invalid" point');
+    if (currentPhase === 2) {
+      action.reset('lift');
+    }
+  }
+};
+
 const boardsView = defView(db, ['boards'], (boards) => [
   'div.grid',
   boardsToGridArray(boards).map((x, i) => {
@@ -129,129 +232,7 @@ const boardsView = defView(db, ['boards'], (boards) => [
       ? [
           'span.point',
           {
-            onclick: () => {
-              console.log('db.deref()', db.deref());
-              feedback.reset('');
-
-              const currentAction = action.deref();
-              const currentOpponent = opponent.deref();
-              const currentPhase = phase.deref();
-              const currentTurn = turn.deref();
-
-              const clickedOnOpponent = pieceAtPoint === currentOpponent;
-              const clickedOnOwnPiece = pieceAtPoint === currentTurn;
-
-              if (
-                currentPhase === 1 &&
-                currentAction === 'place' &&
-                !pieceAtPoint
-              ) {
-                // update board
-                const boardAfterPlace = aplPlacePiece(
-                  boards[currentTurn],
-                  aplIndex
-                );
-                boardsCursor.resetIn(currentTurn, boardAfterPlace);
-
-                // update numPiecesPlaced
-                numPiecesPlacedCursor.swapIn(currentTurn, (x) => x + 1);
-
-                // either continue or end turn depending on if there's a new mill
-                const previousNumberOfMills = getNumberOfMills(
-                  boards[currentTurn]
-                );
-                const newNumberOfMills = getNumberOfMills(boardAfterPlace);
-                if (newNumberOfMills > previousNumberOfMills) {
-                  console.log('REMOVE 1');
-                  action.reset('remove');
-                } else {
-                  console.log('ENDTURN 1');
-                  endTurn();
-                }
-              } else if (
-                currentPhase === 2 &&
-                currentAction === 'place' &&
-                !pieceAtPoint
-              ) {
-                if (
-                  isFlying.deref()[currentTurn] ||
-                  possiblePlaces.deref().includes(aplIndex)
-                ) {
-                  // update board
-                  const boardAfterRemoval = aplRemovePiece(
-                    boards[currentTurn],
-                    liftedAplIndex.deref()
-                  );
-                  const boardAfterPlace = aplPlacePiece(
-                    boardAfterRemoval,
-                    aplIndex
-                  );
-                  boardsCursor.resetIn(currentTurn, boardAfterPlace);
-
-                  // either continue or end turn depending on if there's a new mill
-                  const previousNumberOfMills = getNumberOfMills(
-                    boardAfterRemoval
-                  );
-                  const newNumberOfMills = getNumberOfMills(boardAfterPlace);
-                  if (newNumberOfMills > previousNumberOfMills) {
-                    action.reset('remove');
-                  } else {
-                    console.log('LIFT 1');
-                    action.reset('lift');
-                    console.log('ENDTURN 2');
-                    endTurn();
-                  }
-                } else {
-                  feedback.reset('not legal move, cancel');
-                  console.log('LIFT 2');
-                  action.reset('lift');
-                }
-
-                liftedAplIndex.reset(null);
-                possiblePlaces.reset([]);
-              } else if (currentAction === 'remove' && clickedOnOpponent) {
-                const newBoard = aplRemovePiece(
-                  boards[currentOpponent],
-                  aplIndex
-                );
-                boardsCursor.resetIn(currentOpponent, newBoard);
-                millCursor.resetIn(currentOpponent, getNumberOfMills(newBoard));
-                if (currentPhase === 1) {
-                  action.reset('place');
-                } else {
-                  console.log('LIFT 3');
-                  action.reset('lift');
-                }
-                console.log('ENDTURN 3');
-                endTurn();
-              } else if (currentAction === 'lift' && clickedOnOwnPiece) {
-                const openPoints = openPointsAdjacentToPiece(
-                  boards[currentTurn],
-                  boards[currentOpponent],
-                  connectedPointsGraph[aplIndex]
-                );
-
-                console.log('openPoints', openPoints);
-
-                if (isFlying.deref()[currentTurn]) {
-                  console.log('yep we are flying');
-                  action.reset('place');
-                  liftedAplIndex.reset(aplIndex);
-                } else if (!!openPoints.length) {
-                  console.log('PLACE 2');
-                  action.reset('place');
-                  possiblePlaces.reset(openPoints);
-                  liftedAplIndex.reset(aplIndex);
-                } else {
-                  feedback.reset("this piece doesn't have any available moves");
-                }
-              } else {
-                console.log('clicked on "invalid" point');
-                if (currentPhase === 2) {
-                  action.reset('lift');
-                }
-              }
-            },
+            onclick: () => onClickPoint(boards, aplIndex, pieceAtPoint),
           },
           ['span.inner', pieceAtPoint],
         ]
