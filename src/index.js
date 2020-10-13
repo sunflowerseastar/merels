@@ -232,6 +232,7 @@ const boardsView = defView(db, ['boards'], (boards) => [
       ? [
           'span.point',
           {
+            "data-lines": `line-${aplIndex}`,
             onclick: () => {
               if (!blockInteractions.deref()) {
                 blockInteractions.reset(true);

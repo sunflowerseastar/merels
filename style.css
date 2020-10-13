@@ -51,6 +51,129 @@ button:hover {
   cursor: pointer;
   position: relative;
 }
+.point[data-lines|='line'] {
+  position: relative;
+}
+.point[data-lines|='line']:before {
+  content: '';
+  position: absolute;
+  background: #ddd;
+  pointer-events: none;
+}
+
+/* top-left down to bottom-left */
+.point[data-lines='line-0']:before {
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: calc(600% + (6 * 10px));
+  width: 1px;
+}
+.point[data-lines='line-9']:before {
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: calc(400% + (4 * 10px));
+  width: 1px;
+}
+.point[data-lines='line-18']:before {
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: calc(200% + (2 * 10px));
+  width: 1px;
+}
+
+/* bottom-left across to bottom-right */
+.point[data-lines='line-6']:before {
+  top: 50%;
+  left: 50%;
+  transform: translateY(-50%);
+  width: calc(600% + (6 * 10px));
+  height: 1px;
+}
+.point[data-lines='line-15']:before {
+  top: 50%;
+  left: 50%;
+  transform: translateY(-50%);
+  width: calc(400% + (4 * 10px));
+  height: 1px;
+}
+.point[data-lines='line-24']:before {
+  top: 50%;
+  left: 50%;
+  transform: translateY(-50%);
+  width: calc(200% + (2 * 10px));
+  height: 1px;
+}
+
+/* bottom-right up to top-right */
+.point[data-lines='line-8']:before {
+  bottom: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: calc(600% + (6 * 10px));
+  width: 1px;
+}
+.point[data-lines='line-17']:before {
+  bottom: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: calc(400% + (4 * 10px));
+  width: 1px;
+}
+.point[data-lines='line-26']:before {
+  bottom: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: calc(200% + (2 * 10px));
+  width: 1px;
+}
+
+/* top-right across to top-left */
+.point[data-lines='line-2']:before {
+  top: 50%;
+  right: 50%;
+  transform: translateY(-50%);
+  width: calc(600% + (6 * 10px));
+  height: 1px;
+}
+.point[data-lines='line-11']:before {
+  top: 50%;
+  right: 50%;
+  transform: translateY(-50%);
+  width: calc(400% + (4 * 10px));
+  height: 1px;
+}
+.point[data-lines='line-20']:before {
+  top: 50%;
+  right: 50%;
+  transform: translateY(-50%);
+  width: calc(200% + (2 * 10px));
+  height: 1px;
+}
+
+/* centers vertical */
+.point[data-lines='line-10']:before,
+.point[data-lines='line-16']:before {
+  top: 50%;
+  left: 50%;
+  transform: translateY(-50%) translateX(-50%);
+  height: calc(200% + (2 * 10px));
+  width: 1px;
+}
+
+/* centers horizontal */
+.point[data-lines='line-12']:before,
+.point[data-lines='line-14']:before {
+  top: 50%;
+  left: 50%;
+  transform: translateY(-50%) translateX(-50%);
+  width: calc(200% + (2 * 10px));
+  height: 1px;
+}
+
+/* point circle */
 .point:after {
   content: '';
   position: absolute;
@@ -58,15 +181,20 @@ button:hover {
   left: 0;
   right: 0;
   bottom: 0;
+  background: white;
   border: 1px solid #ccc;
   border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
 }
+
 .inner {
   display: block;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translateY(-50%) translateX(-50%);
+  z-index: 2;
 }
 
 .info {
