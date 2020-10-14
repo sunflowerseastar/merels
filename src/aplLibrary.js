@@ -1,4 +1,6 @@
 // copied directly from https://gitlab.com/n9n/apl, no changes
+const prd=x=>{let r=1;for(let i=0;i<x.length;i++)r*=x[i];return r}
+const fmtNum=x=>(''+x).replace('Infinity','∞').replace(/-/g,'¯')
 export const fmt = (x) => {
   // as array of strings
   const t = typeof x;
