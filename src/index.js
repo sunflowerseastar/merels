@@ -10,7 +10,7 @@ import {
   getNumberOfPieces,
   openPointsAdjacentToPiece,
   atest,
-} from './apl';
+} from './myapl';
 import {
   boardDbAtPhase2,
   boardDbBeforePhase3,
