@@ -1,7 +1,7 @@
 body {
   margin: 0;
-  font-family: monospace;
-  font-size: 1.3em;
+  font-family: sans-serif;
+  font-size: 1;
 }
 #app {
   height: 100vh;
@@ -13,6 +13,7 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 .title {
   margin: 2em 0 0.8em;
@@ -50,6 +51,8 @@ button:hover {
   display: block;
   cursor: pointer;
   position: relative;
+  font-family: monospace;
+  font-size: 1.5em;
 }
 .point[data-lines|='line'] {
   position: relative;
@@ -197,7 +200,39 @@ button:hover {
   z-index: 2;
 }
 
-.info {
+.controls {
+  display: flex;
+  justify-content: 'space-between';
+  /* margin-top: 1.6em; */
+  width: 65%;
+  margin: 0 auto;
+  cursor: default;
+}
+.controls > p {
   flex: 1;
-  margin-top: 1.6em;
+  text-align: center;
+}
+.turn,
+.action {
+  cursor: default;
+  opacity: 0.8;
+}
+.turn.end,
+.action.end {
+  opacity: 0;
+}
+.reset {
+  opacity: 0;
+}
+.reset.end {
+  cursor: pointer;
+  opacity: 0.8;
+}
+.feedback {
+  text-align: center;
+  min-height: 60px;
+  font-style: italic;
+  font-size: 0.9em;
+  cursor: default;
+  opacity: 0.8;
 }

@@ -84,9 +84,7 @@ const checkAdvanceToPhase2 = () => {
     const numberOfPiecesCurrentTurn = getNumberOfPieces(board[currentTurn]);
 
     if (numberOfPiecesOpponent === 3) {
-      feedback.reset(
-        `${currentOpponent === 'w' ? 'white' : 'black'} is flying`
-      );
+      feedback.reset('flying');
       isFlying.resetIn(currentOpponent, true);
     }
     if (numberOfPiecesOpponent === 2) {
@@ -174,7 +172,7 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
         endTurn();
       }
     } else {
-      feedback.reset('not legal move, cancel');
+      feedback.reset('illegal');
       console.log('LIFT 2');
       action.reset('lift');
     }
@@ -212,7 +210,7 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
       possiblePlaces.reset(openPoints);
       liftedAplIndex.reset(aplIndex);
     } else {
-      feedback.reset("this piece doesn't have any available moves");
+      feedback.reset('immovable');
     }
   } else {
     console.log('clicked on "invalid" point');
@@ -232,7 +230,7 @@ const boardsView = defView(db, ['boards'], (boards) => [
       ? [
           'span.point',
           {
-            "data-lines": `line-${aplIndex}`,
+            'data-lines': `line-${aplIndex}`,
             onclick: () => {
               if (!blockInteractions.deref()) {
                 blockInteractions.reset(true);
@@ -253,12 +251,31 @@ const boardsView = defView(db, ['boards'], (boards) => [
 
 start(() => [
   'div.app-inner',
-  ['h1.title', { onclick: () => db.reset(initialDb) }, 'mill'],
   boardsView,
   [
-    'div.info',
-    ['p.turn', 'turn: ', turn.deref()],
-    ['p.action', 'action: ', action.deref()],
-    ['p.feedback', 'feedback: ', feedback.deref()],
+    'div.controls',
+    [
+      'p.turn',
+      {
+        class: action.deref(),
+      },
+      turn.deref(),
+    ],
+    [
+      'p.reset',
+      {
+        class: action.deref(),
+        onclick: () => (action.deref() === 'end' ? db.reset(initialDb) : {}),
+      },
+      action.deref() === 'end' ? 'reset' : '',
+    ],
+    [
+      'p.action',
+      {
+        class: action.deref(),
+      },
+      action.deref(),
+    ],
   ],
+  ['p.feedback', feedback.deref()],
 ]);

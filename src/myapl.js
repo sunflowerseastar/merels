@@ -1,4 +1,4 @@
-import libraryApl from 'apl';
+import libraryApl from './apl';
 import { fmt } from './aplLibrary';
 
 export const aplToJs = (aplResult) =>
