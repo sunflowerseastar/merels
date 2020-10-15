@@ -44,6 +44,7 @@ const initialDb = {
 };
 
 const db = defAtom(initialDb);
+// const db = defAtom(boardDbAtPhase2);
 const blockInteractions = defAtom(false);
 
 const action = defCursor(db, 'action');
@@ -243,7 +244,7 @@ const boardsView = defView(db, ['boards'], (boards) => [
               }
             },
           },
-          ['span.inner', pieceAtPoint],
+          ['span.piece', { class: pieceAtPoint || 'empty' }, ''],
         ]
       : ['span', ''];
   }),
@@ -251,31 +252,34 @@ const boardsView = defView(db, ['boards'], (boards) => [
 
 start(() => [
   'div.app-inner',
-  boardsView,
+  {
+    class: `phase-${phase.deref()} turn-${turn.deref()} action-${action.deref()}`,
+  },
+  ['div.board', boardsView],
   [
     'div.controls',
+    {
+      class: action.deref(),
+    },
     [
-      'p.turn',
-      {
-        class: action.deref(),
-      },
-      turn.deref(),
+      'div.turn-pieces-container',
+      [
+        'div.turn-piece-container',
+        ['span.piece.w', { class: `current-${turn.deref()}` }],
+      ],
+      [
+        'div.turn-piece-container',
+        ['span.piece.b', { class: `current-${turn.deref()}` }],
+      ],
     ],
     [
       'p.reset',
       {
-        class: action.deref(),
         onclick: () => (action.deref() === 'end' ? db.reset(initialDb) : {}),
       },
-      action.deref() === 'end' ? 'reset' : '',
+      action.deref() === 'end' ? 'restart' : '',
     ],
-    [
-      'p.action',
-      {
-        class: action.deref(),
-      },
-      action.deref(),
-    ],
+    ['p.action', action.deref()],
   ],
   ['p.feedback', feedback.deref()],
 ]);

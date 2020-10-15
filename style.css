@@ -1,7 +1,22 @@
+:root {
+  --gray-dark: #9c9c9c;
+  --gray-darker: #282828;
+  --gray-light: #ddd;
+  --gray-lighter: #eee;
+  --gray: #bbb;
+  --grid-gap: 10px;
+  --surround: 150%;
+  --point-surround-large: 16px;
+  --point-surround: 12px;
+  --piece-diameter-large: 34px;
+  --piece-diameter: 30px;
+  --point-diameter-large: 8px;
+  --point-diameter: 5px;
+}
 body {
   margin: 0;
   font-family: sans-serif;
-  font-size: 1;
+  color: var(--gray-darker);
 }
 #app {
   height: 100vh;
@@ -36,11 +51,11 @@ button:hover {
   position: relative;
   left: 50%;
   transform: translateX(-50%);
-  margin: 2em 0 1em;
+  margin: 2em 0 2em;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  column-gap: 10px;
-  row-gap: 10px;
+  column-gap: var(--grid-gap);
+  row-gap: var(--grid-gap);
   max-width: 55vh;
 }
 .grid > span {
@@ -60,7 +75,7 @@ button:hover {
 .point[data-lines|='line']:before {
   content: '';
   position: absolute;
-  background: #ddd;
+  background: var(--gray-light);
   pointer-events: none;
 }
 
@@ -69,21 +84,21 @@ button:hover {
   top: 50%;
   left: 50%;
   transform: translateX(-50%);
-  height: calc(600% + (6 * 10px));
+  height: calc(600% + (6 * var(--grid-gap)));
   width: 1px;
 }
 .point[data-lines='line-9']:before {
   top: 50%;
   left: 50%;
   transform: translateX(-50%);
-  height: calc(400% + (4 * 10px));
+  height: calc(400% + (4 * var(--grid-gap)));
   width: 1px;
 }
 .point[data-lines='line-18']:before {
   top: 50%;
   left: 50%;
   transform: translateX(-50%);
-  height: calc(200% + (2 * 10px));
+  height: calc(200% + (2 * var(--grid-gap)));
   width: 1px;
 }
 
@@ -92,21 +107,21 @@ button:hover {
   top: 50%;
   left: 50%;
   transform: translateY(-50%);
-  width: calc(600% + (6 * 10px));
+  width: calc(600% + (6 * var(--grid-gap)));
   height: 1px;
 }
 .point[data-lines='line-15']:before {
   top: 50%;
   left: 50%;
   transform: translateY(-50%);
-  width: calc(400% + (4 * 10px));
+  width: calc(400% + (4 * var(--grid-gap)));
   height: 1px;
 }
 .point[data-lines='line-24']:before {
   top: 50%;
   left: 50%;
   transform: translateY(-50%);
-  width: calc(200% + (2 * 10px));
+  width: calc(200% + (2 * var(--grid-gap)));
   height: 1px;
 }
 
@@ -115,21 +130,21 @@ button:hover {
   bottom: 50%;
   left: 50%;
   transform: translateX(-50%);
-  height: calc(600% + (6 * 10px));
+  height: calc(600% + (6 * var(--grid-gap)));
   width: 1px;
 }
 .point[data-lines='line-17']:before {
   bottom: 50%;
   left: 50%;
   transform: translateX(-50%);
-  height: calc(400% + (4 * 10px));
+  height: calc(400% + (4 * var(--grid-gap)));
   width: 1px;
 }
 .point[data-lines='line-26']:before {
   bottom: 50%;
   left: 50%;
   transform: translateX(-50%);
-  height: calc(200% + (2 * 10px));
+  height: calc(200% + (2 * var(--grid-gap)));
   width: 1px;
 }
 
@@ -138,21 +153,21 @@ button:hover {
   top: 50%;
   right: 50%;
   transform: translateY(-50%);
-  width: calc(600% + (6 * 10px));
+  width: calc(600% + (6 * var(--grid-gap)));
   height: 1px;
 }
 .point[data-lines='line-11']:before {
   top: 50%;
   right: 50%;
   transform: translateY(-50%);
-  width: calc(400% + (4 * 10px));
+  width: calc(400% + (4 * var(--grid-gap)));
   height: 1px;
 }
 .point[data-lines='line-20']:before {
   top: 50%;
   right: 50%;
   transform: translateY(-50%);
-  width: calc(200% + (2 * 10px));
+  width: calc(200% + (2 * var(--grid-gap)));
   height: 1px;
 }
 
@@ -162,7 +177,7 @@ button:hover {
   top: 50%;
   left: 50%;
   transform: translateY(-50%) translateX(-50%);
-  height: calc(200% + (2 * 10px));
+  height: calc(200% + (2 * var(--grid-gap)));
   width: 1px;
 }
 
@@ -172,7 +187,7 @@ button:hover {
   top: 50%;
   left: 50%;
   transform: translateY(-50%) translateX(-50%);
-  width: calc(200% + (2 * 10px));
+  width: calc(200% + (2 * var(--grid-gap)));
   height: 1px;
 }
 
@@ -180,18 +195,27 @@ button:hover {
 .point:after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 50%;
+  left: 50%;
+  transform: translateY(-50%) translateX(-50%);
+  width: var(--point-diameter);
+  height: var(--point-diameter);
+  /* background: var(--gray); */
   background: white;
-  border: 1px solid #ccc;
+  border: 1px solid var(--gray);
+  box-shadow: 1px 1px 0 #0001;
   border-radius: 50%;
   z-index: 1;
   pointer-events: none;
 }
+@media (min-width: 992px) {
+  .point:after {
+    width: var(--point-diameter-large);
+    height: var(--point-diameter-large);
+  }
+}
 
-.inner {
+.piece {
   display: block;
   position: absolute;
   top: 50%;
@@ -199,40 +223,133 @@ button:hover {
   transform: translateY(-50%) translateX(-50%);
   z-index: 2;
 }
+.piece.w,
+.piece.b {
+  width: var(--piece-diameter);
+  height: var(--piece-diameter);
+  border-radius: 50%;
+  box-shadow: 1px 1px 0px var(--gray);
+}
+@media (min-width: 992px) {
+  .piece.w,
+  .piece.b {
+    width: var(--piece-diameter-large);
+    height: var(--piece-diameter-large);
+  }
+}
+.piece.w {
+  background: white;
+  border: 1px solid var(--gray-dark);
+}
+.piece.b {
+  background: black;
+  border: 1px solid black;
+}
+
+/* surrounds
+
+  "surround" is a circle around a point/piece to indicate 'active' or 'possible action'
+
+  combination of 'active' and 'possible' TODO maybe simply or split?
+
+  commented out until there's logic to also:
+    - surround a lifted piece ('active')
+    - surround possible moves once lifted phase 2 ('possible')
+
+.phase-1.action-place .piece.empty {
+  width: var(--point-surround);
+  height: var(--point-surround);
+  border-radius: 50%;
+  border: 1px solid var(--gray-lighter);
+}
+ @media (min-width: 992px) {
+   .phase-1.action-place .piece.empty {
+     width: var(--point-surround-large);
+     height: var(--point-surround-large);
+   }
+ }
+
+.phase-2.action-lift.turn-w .board .piece.w:after,
+.phase-2.action-lift.turn-b .board .piece.b:after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateY(-50%) translateX(-50%);
+  width: var(--surround);
+  height: var(--surround);
+  border-radius: 50%;
+  border: 1px solid var(--gray-lighter);
+}
+*/
 
 .controls {
   display: flex;
   justify-content: 'space-between';
-  /* margin-top: 1.6em; */
   width: 65%;
   margin: 0 auto;
   cursor: default;
 }
-.controls > p {
+.controls > p,
+.controls > div {
   flex: 1;
   text-align: center;
 }
-.turn,
 .action {
-  cursor: default;
-  opacity: 0.8;
+  font-size: 0.95em;
+  opacity: 0.7;
 }
-.turn.end,
-.action.end {
+.end .turn-pieces-container,
+.end .action {
   opacity: 0;
+}
+.turn-pieces-container {
+  display: flex;
+}
+
+.turn-piece-container {
+  position: relative;
+  transform: scale(0.77);
+  flex: 1;
+}
+@media (min-width: 992px) {
+  .turn-piece-container {
+    transform: scale(0.64);
+  }
+}
+.turn-piece-container .current-w,
+.turn-piece-container .current-b {
+  position: relative;
+}
+.turn-piece-container .piece.w.current-w:after,
+.turn-piece-container .piece.b.current-b:after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateY(-50%) translateX(-50%);
+  width: 180%;
+  height: 180%;
+  border: 1px solid var(--gray-light);
 }
 .reset {
+  text-transform: uppercase;
+  font-size: 0.8em;
+  letter-spacing: 0.08em;
   opacity: 0;
 }
-.reset.end {
+.end .reset {
   cursor: pointer;
   opacity: 0.8;
 }
+
 .feedback {
   text-align: center;
   min-height: 60px;
   font-style: italic;
-  font-size: 0.9em;
+  font-size: 0.85em;
+  padding-top: 1em;
   cursor: default;
   opacity: 0.8;
 }
