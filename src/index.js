@@ -213,8 +213,11 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
     } else {
       feedback.reset('immovable');
     }
+  } else if (currentAction === 'remove' && !clickedOnOpponent) {
+    console.log('cannot remove this piece');
+    feedback.reset('invalid')
   } else {
-    console.log('clicked on "invalid" point');
+    console.log('final else state');
     if (currentPhase === 2) {
       action.reset('lift');
     }
