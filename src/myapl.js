@@ -59,8 +59,8 @@ numintermills ← +/ ⊃ ∧/ interlines ¨ squares
 nummills ← numintramills + numintermills
 `)[0];
 
-export const isIndexInMill = (board, aplIndex, possibleMills) => {
-  const pieceToRemoveIsInMill = apl(`
+export const isIndexInMill = (board, possibleMills) =>
+  apl(`
 squares ← ⊂[1 2] 3 3 3⍴${board}
 flatten ← {⊃,/⍵}
 
@@ -74,9 +74,6 @@ allmills ← flatten intramills intermills
 
 ∨/ {⍵[${possibleMills}]} allmills
 `)[0];
-  console.log('pieceToRemoveIsInMill', pieceToRemoveIsInMill);
-  return pieceToRemoveIsInMill;
-};
 
 export const getNumberOfPieces = (board) => apl(`+/${board}`)[0];
 

@@ -1,3 +1,7 @@
+import {
+  isIndexInMill,
+} from './myapl';
+
 // takes a board index, looks it up, and if it's a point position, returns that
 export const gridIndexToAplIndex = {
   0: 0,
@@ -119,3 +123,21 @@ export const boardDbBeforePhase3 = {
   "possiblePlaces": [],
   "liftedAplIndex": null
 }
+
+export const areNonMillOpponentPiecesAvailable = (opponentBoard) =>
+!!opponentBoard
+  .reduce((acc, x, i) => {
+    // 'for each' of the opponents' pieces
+    if (!!x) {
+      acc.push(
+        isIndexInMill(
+          opponentBoard,
+          aplIndexToMillIndex[i] // aka 'possibleMills', above
+        )
+      );
+    }
+    return acc;
+  }, [])
+// remove the pieces that are in mills,
+// and see if any pieces not in mills are left
+  .filter((x) => x === 0).length;

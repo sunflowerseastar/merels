@@ -2,18 +2,18 @@ import { defAtom, defCursor, defView } from '@thi.ng/atom';
 import { resetIn } from '@thi.ng/paths';
 import { start } from '@thi.ng/hdom';
 import {
-  aplPlacePiece,
   aplPlaceAndRemovePiece,
+  aplPlacePiece,
   aplRemovePiece,
   boardsToGridArray,
   getNumberOfMills,
   getNumberOfPieces,
   isIndexInMill,
   openPointsAdjacentToPiece,
-  atest,
 } from './myapl';
 import {
   aplIndexToMillIndex,
+  areNonMillOpponentPiecesAvailable,
   boardDbAtPhase2,
   boardDbBeforePhase3,
   connectedPointsGraph,
@@ -184,21 +184,35 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
     possiblePlaces.reset([]);
   } else if (currentAction === 'remove' && clickedOnOpponent) {
     console.log('request to remove', aplIndex);
-    const possibleMills = aplIndexToMillIndex[aplIndex]
-    console.log('possibleMills', possibleMills);
-    const pieceToRemoveIsInMill = isIndexInMill(boards[currentOpponent], aplIndex, possibleMills)
-    console.log('pieceToRemoveIsInMill', pieceToRemoveIsInMill);
-    const newBoard = aplRemovePiece(boards[currentOpponent], aplIndex);
-    boardsCursor.resetIn(currentOpponent, newBoard);
-    millCursor.resetIn(currentOpponent, getNumberOfMills(newBoard));
-    if (currentPhase === 1) {
-      action.reset('place');
+    const opponentBoard = boards[currentOpponent];
+    const pieceToRemoveIsInMill = isIndexInMill(
+      opponentBoard,
+      aplIndexToMillIndex[aplIndex]
+    );
+
+    if (
+      pieceToRemoveIsInMill &&
+      areNonMillOpponentPiecesAvailable(opponentBoard)
+    ) {
+      console.log('this piece is in a mill and others are available');
+      feedback.reset('locked in mill');
     } else {
-      console.log('LIFT 3');
-      action.reset('lift');
+      console.log(
+        'either piece is not in a mill, or no other non-mill pieces are available'
+      );
+
+      const newBoard = aplRemovePiece(boards[currentOpponent], aplIndex);
+      boardsCursor.resetIn(currentOpponent, newBoard);
+      millCursor.resetIn(currentOpponent, getNumberOfMills(newBoard));
+      if (currentPhase === 1) {
+        action.reset('place');
+      } else {
+        console.log('LIFT 3');
+        action.reset('lift');
+      }
+      console.log('ENDTURN 3');
+      endTurn();
     }
-    console.log('ENDTURN 3');
-    endTurn();
   } else if (currentAction === 'lift' && clickedOnOwnPiece) {
     const openPoints = openPointsAdjacentToPiece(
       boards[currentTurn],
@@ -222,7 +236,7 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
     }
   } else if (currentAction === 'remove' && !clickedOnOpponent) {
     console.log('cannot remove this piece');
-    feedback.reset('invalid')
+    feedback.reset('invalid');
   } else {
     console.log('final else state');
     if (currentPhase === 2) {
@@ -294,8 +308,8 @@ start(() => [
   ['p.feedback', feedback.deref()],
 ]);
 
-window.addEventListener('keypress', e => {
+window.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
-    console.log('enter', boardsCursor.deref())
+    console.log('enter', boardsCursor.deref());
   }
-})
+});
