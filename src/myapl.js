@@ -38,7 +38,7 @@ finalboard ← combinedwhite ∨ combinedblack
 export const boardsToGridArray = (boards) => apl(boardsToGridInput(boards));
 
 export const aplPlacePiece = (board, aplIndex) =>
-apl(`b ← ${board} \n b[${aplIndex}] ← 1`);
+  apl(`b ← ${board} \n b[${aplIndex}] ← 1`);
 
 export const aplPlaceAndRemovePiece = (board, aplPlaceIndex, aplRemoveIndex) =>
   apl(`b ← ${board} \n b[${aplPlaceIndex}] ← 1 \n b[${aplRemoveIndex}] ← 0`);
@@ -58,6 +58,25 @@ numintermills ← +/ ⊃ ∧/ interlines ¨ squares
 
 nummills ← numintramills + numintermills
 `)[0];
+
+export const isIndexInMill = (board, aplIndex, possibleMills) => {
+  const pieceToRemoveIsInMill = apl(`
+squares ← ⊂[1 2] 3 3 3⍴${board}
+flatten ← {⊃,/⍵}
+
+intralines ← {(⍵[0;])(⍵[;0])(⍵[;2])(⍵[2;])}
+intramills ← ∧/ ¨ flatten intralines ¨ squares
+
+interlines ← {(⍵[0;1])(⍵[1;0])(⍵[1;2])(⍵[2;1])}
+intermills ← ⊃ ∧/ interlines ¨ squares
+
+allmills ← flatten intramills intermills
+
+∨/ {⍵[${possibleMills}]} allmills
+`)[0];
+  console.log('pieceToRemoveIsInMill', pieceToRemoveIsInMill);
+  return pieceToRemoveIsInMill;
+};
 
 export const getNumberOfPieces = (board) => apl(`+/${board}`)[0];
 

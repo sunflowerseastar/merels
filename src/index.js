@@ -8,10 +8,12 @@ import {
   boardsToGridArray,
   getNumberOfMills,
   getNumberOfPieces,
+  isIndexInMill,
   openPointsAdjacentToPiece,
   atest,
 } from './myapl';
 import {
+  aplIndexToMillIndex,
   boardDbAtPhase2,
   boardDbBeforePhase3,
   connectedPointsGraph,
@@ -181,6 +183,11 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
     liftedAplIndex.reset(null);
     possiblePlaces.reset([]);
   } else if (currentAction === 'remove' && clickedOnOpponent) {
+    console.log('request to remove', aplIndex);
+    const possibleMills = aplIndexToMillIndex[aplIndex]
+    console.log('possibleMills', possibleMills);
+    const pieceToRemoveIsInMill = isIndexInMill(boards[currentOpponent], aplIndex, possibleMills)
+    console.log('pieceToRemoveIsInMill', pieceToRemoveIsInMill);
     const newBoard = aplRemovePiece(boards[currentOpponent], aplIndex);
     boardsCursor.resetIn(currentOpponent, newBoard);
     millCursor.resetIn(currentOpponent, getNumberOfMills(newBoard));
