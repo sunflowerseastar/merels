@@ -283,3 +283,9 @@ start(() => [
   ],
   ['p.feedback', feedback.deref()],
 ]);
+
+window.addEventListener('keypress', e => {
+  if (e.key === 'Enter') {
+    console.log('enter', boardsCursor.deref())
+  }
+})
