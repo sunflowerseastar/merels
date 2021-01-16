@@ -77,6 +77,7 @@ allmills ← flatten intramills intermills
 
 export const getNumberOfPieces = (board) => apl(`+/${board}`)[0];
 
+// TODO maybe change w/b to current/opponent?
 export const openPointsAdjacentToPiece = (w, b, ptc) => {
   const entry = `
 w ← ${w}

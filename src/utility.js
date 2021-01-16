@@ -1,6 +1,4 @@
-import {
-  isIndexInMill,
-} from './myapl';
+import { isIndexInMill, openPointsAdjacentToPiece } from './myapl';
 
 // takes a board index, looks it up, and if it's a point position, returns that
 export const gridIndexToAplIndex = {
@@ -57,7 +55,7 @@ export const aplIndexToMillIndex = {
   24: [9, 11],
   25: [11, 15],
   26: [10, 11],
-}
+};
 
 export const connectedPointsGraph = {
   0: [1, 3],
@@ -88,56 +86,32 @@ export const connectedPointsGraph = {
   26: [23, 25],
 };
 
-export const testWhiteBoard = [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1,];
-export const testBlackBoard = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,];
-
-export const boardDbAtPhase2 = {
-  phase: 1,
-  boards: {
-    w: [1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0,],
-    b: [0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0,],
-  },
-  numberOfMills: {w: 0, b: 0,},
-  numberOfPiecesOnBoard: {w: 0, b: 0,},
-  numberOfPiecesPlaced: {w: 9, b: 8,},
-  turn: 'b',
-  action: 'place',
-  isFlying: {w: false, b: false,},
-  feedback: '',
-  liftedAplIndex: null,
-  possiblePlaces: [],
-};
-
-export const boardDbBeforePhase3 = {
-  "phase": 2,
-  "boards": {
-    "w": [1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-    "b": [0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]},
-  "numberOfMills": {"w": 0, "b": 2},
-  "numberOfPiecesOnBoard": {"w": 0, "b": 0},
-  "numberOfPiecesPlaced": {"w": 9, "b": 9},
-  "turn": "b",
-  "action": "lift",
-  isFlying: {w: false, b: false,},
-  "feedback": "",
-  "possiblePlaces": [],
-  "liftedAplIndex": null
-}
-
 export const areNonMillOpponentPiecesAvailable = (opponentBoard) =>
-!!opponentBoard
-  .reduce((acc, x, i) => {
-    // 'for each' of the opponents' pieces
-    if (!!x) {
-      acc.push(
-        isIndexInMill(
-          opponentBoard,
-          aplIndexToMillIndex[i] // aka 'possibleMills', above
-        )
-      );
-    }
-    return acc;
-  }, [])
-// remove the pieces that are in mills,
-// and see if any pieces not in mills are left
-  .filter((x) => x === 0).length;
+  !!opponentBoard
+    .reduce((acc, x, i) => {
+      // 'for each' of the opponents' pieces
+      if (!!x) {
+        acc.push(
+          isIndexInMill(
+            opponentBoard,
+            aplIndexToMillIndex[i] // aka 'possibleMills', above
+          )
+        );
+      }
+      return acc;
+    }, [])
+    // remove the pieces that are in mills,
+    // and see if any pieces not in mills are left
+    .filter((x) => x === 0).length;
+
+export const areTherePossibleAdjacentMoves = (playerToCheckBoard, otherPlayerBoard) =>
+  !!playerToCheckBoard
+    .reduce((acc, x, i) => (x ? [...acc, i] : acc), [])
+    .map((x) =>
+      openPointsAdjacentToPiece(
+        playerToCheckBoard,
+        otherPlayerBoard,
+        connectedPointsGraph[x]
+      )
+    )
+    .reduce((acc, x) => acc + x.length, 0);

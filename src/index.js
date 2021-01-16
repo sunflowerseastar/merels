@@ -14,11 +14,15 @@ import {
 import {
   aplIndexToMillIndex,
   areNonMillOpponentPiecesAvailable,
-  boardDbAtPhase2,
-  boardDbBeforePhase3,
+  areTherePossibleAdjacentMoves,
   connectedPointsGraph,
   gridIndexToAplIndex,
 } from './utility';
+import {
+  boardDbAtPhase2,
+  boardDbBeforePhase3,
+  boardWithFourBlack,
+} from './testBoards';
 
 const initialDb = {
   phase: 1,
@@ -101,10 +105,22 @@ const endGameOrChangeTurn = () => {
   const currentOpponent = opponent.deref();
   const currentPhase = phase.deref();
   const currentTurn = turn.deref();
-  const board = boardsCursor.deref();
-  const numberOfPiecesOpponent = getNumberOfPieces(board[currentOpponent]);
+  const boards = boardsCursor.deref();
+  const numberOfPiecesOpponent = getNumberOfPieces(boards[currentOpponent]);
 
-  if (currentPhase === 2 && numberOfPiecesOpponent === 2) {
+  const upcomingPlayerHasAdjacentMoves = areTherePossibleAdjacentMoves(
+    boards[currentOpponent],
+    boards[currentTurn]
+  );
+  const upcomingPlayerCannotMove =
+    currentPhase === 2 &&
+    numberOfPiecesOpponent > 2 &&
+    !upcomingPlayerHasAdjacentMoves;
+  const upcomingPlayerIsDownToTwoPieces =
+    currentPhase === 2 && numberOfPiecesOpponent === 2;
+
+  if (upcomingPlayerCannotMove || upcomingPlayerIsDownToTwoPieces) {
+    console.log('end game');
     feedback.reset(`${currentTurn === 'w' ? 'white' : 'black'} wins`);
     action.reset('end');
     turn.reset('');
