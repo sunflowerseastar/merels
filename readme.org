@@ -1,0 +1,82 @@
+* Merels
+
+** Quick Start
+
+#+begin_src sh
+yarn
+yarn start
+#+end_src
+
+localhost:8080
+
+** Dependencies
+
+*** APL
+
+[[http://archive.vector.org.uk/art10501160][Nick Nickolov's APL]] is hard-copied into ~src/apl~, with a few helper functions cherry-picked from the [[https://gitlab.com/n9n/apl][GitLab repo]] into ~src/aplLibraryHelpers.js~. See ~src/apl/license~ and ~src/apl/readme.md~. My code calls the library and helpers from ~src/aplGameFunctions.js~.
+
+*** Umbrella
+
+[[https://github.com/thi-ng/umbrella/tree/develop/packages/atom][Atom]] manages game state (like [[https://clojure.org/reference/atoms][Clojure atoms]]), [[https://github.com/thi-ng/umbrella/tree/develop/packages/hdom][hdom]] manages the DOM, and [[https://github.com/thi-ng/umbrella/tree/develop/packages/paths][paths]] is an immutable nested object accessor/helper. If you're unfamiliar with [[https://github.com/thi-ng/umbrella/tree/develop/packages/hdom][umbrella]], take a look at it and [[https://thi.ng/][thi.ng]]. Incredible.
+
+** Rules
+
+- White starts, white & black alternate turns.
+- Phase 1: place one piece on the board in an open position.
+- If a mill is formed (three of your pieces in a row), remove an opponent piece. A piece in a mill cannot be removed unless no others are available.
+- After all pieces have been placed, phase 2 begins: move one piece to an adjacent location. Same form-a-mill-and-remove-an-opponent-piece rule applies.
+- Player reduced to two pieces or trapped with no legal moves loses.
+
+** Board
+
+Possible piece positions:
+
+#+begin_src
+1  0  0  1  0  0  1
+0  1  0  1  0  1  0
+0  0  1  1  1  0  0
+1  1  1  0  1  1  1
+0  0  1  1  1  0  0
+0  1  0  1  0  1  0
+1  0  0  1  0  0  1
+#+end_src
+
+Grid index:
+
+#+begin_src
+0  1  2  3  4  5  6
+7  8  9  10 11 12 13
+14 15 16 17 18 19 20
+21 22 23 24 25 26 27
+28 29 30 31 32 33 34
+35 36 37 38 39 40 41
+42 43 44 45 46 47 48
+#+end_src
+
+Grid index with non-positions omitted:
+
+#+begin_src
+0        3        6
+   8     10    12
+      16 17 18
+21 22 23    25 26 27
+      30 31 32
+   36    38    40
+42       45       48
+#+end_src
+
+Apl index:
+
+#+begin_src
+0 1 2    9 10 11   18 19 20
+3   5   12    14   21    23
+6 7 8   15 16 17   24 25 26
+#+end_src
+
+Apl positions using the grid indices (translation with utility.js ~gridIndexToAplIndex~):
+
+#+begin_src
+ 0  3  6    8 10 12   16 17 18
+21    27   22    26   23    25
+42 45 48   36 38 40   30 31 32
+#+end_src
