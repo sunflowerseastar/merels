@@ -13,7 +13,7 @@ localhost:8080
 
 *** APL
 
-[[http://archive.vector.org.uk/art10501160][Nick Nickolov's APL]] is hard-copied into ~src/apl~, with a few helper functions cherry-picked from the [[https://gitlab.com/n9n/apl][GitLab repo]] into ~src/aplLibraryHelpers.js~. See ~src/apl/license~ and ~src/apl/readme.md~. My code calls the library and helpers from ~src/aplGameFunctions.js~.
+[[http://archive.vector.org.uk/art10501160][Nick Nickolov's APL]] is hard-copied into ~lib/apl~, with a few helper functions cherry-picked from the [[https://gitlab.com/n9n/apl][GitLab repo]] into ~lib/aplLibraryHelpers.js~. See ~lib/apl/license~ and ~lib/apl/readme.md~. My code calls the library and helpers from ~src/aplGameFunctions.js~.
 
 *** Umbrella
 

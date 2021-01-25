@@ -1,5 +1,5 @@
-import libraryApl from './apl/apl';
-import { fmt } from './aplLibraryHelpers';
+import libraryApl from '../lib/apl/apl';
+import { fmt } from '../lib/aplLibraryHelpers';
 
 export const aplToJs = (aplResult) =>
   fmt(aplResult)[0]
