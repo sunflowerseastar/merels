@@ -1,4 +1,4 @@
-import { isIndexInMill, openPointsAdjacentToPiece } from './myapl';
+import { isIndexInMill, openPointsAdjacentToPiece } from './aplGameFunctions';
 
 // takes a board index, looks it up, and if it's a point position, returns that
 export const gridIndexToAplIndex = {

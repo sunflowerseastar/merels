@@ -10,7 +10,7 @@ import {
   getNumberOfPieces,
   isIndexInMill,
   openPointsAdjacentToPiece,
-} from './myapl';
+} from './aplGameFunctions';
 import {
   aplIndexToMillIndex,
   areNonMillOpponentPiecesAvailable,
