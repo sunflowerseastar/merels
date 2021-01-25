@@ -78,8 +78,7 @@ const checkAdvanceToPhase2 = () => {
     currentNumPlaced['w'] >= 9 &&
     currentNumPlaced['b'] >= 9
   ) {
-    console.log('yes advance to phase 2!!');
-    console.log('LIFT 4');
+    // advance to phase 2
     action.reset('lift');
     phase.reset(2);
   }
@@ -120,18 +119,17 @@ const endGameOrChangeTurn = () => {
     currentPhase === 2 && numberOfPiecesOpponent === 2;
 
   if (upcomingPlayerCannotMove || upcomingPlayerIsDownToTwoPieces) {
-    console.log('end game');
+    // end game
     feedback.reset(`${currentTurn === 'w' ? 'white' : 'black'} wins`);
     action.reset('end');
     turn.reset('');
   } else {
-    console.log('change turn');
+    // change turn
     turn.reset(opponent.deref());
   }
 };
 
 const endTurn = () => {
-  console.log('endTurn');
   checkAdvanceToPhase2();
 
   endGameOrChangeTurn();
@@ -160,10 +158,8 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
     const previousNumberOfMills = getNumberOfMills(boards[currentTurn]);
     const newNumberOfMills = getNumberOfMills(boardAfterPlace);
     if (newNumberOfMills > previousNumberOfMills) {
-      console.log('REMOVE 1');
       action.reset('remove');
     } else {
-      console.log('ENDTURN 1');
       endTurn();
     }
   } else if (currentPhase === 2 && currentAction === 'place' && !pieceAtPoint) {
@@ -185,21 +181,17 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
       if (newNumberOfMills > previousNumberOfMills) {
         action.reset('remove');
       } else {
-        console.log('LIFT 1');
         action.reset('lift');
-        console.log('ENDTURN 2');
         endTurn();
       }
     } else {
       feedback.reset('illegal');
-      console.log('LIFT 2');
       action.reset('lift');
     }
 
     liftedAplIndex.reset(null);
     possiblePlaces.reset([]);
   } else if (currentAction === 'remove' && clickedOnOpponent) {
-    console.log('request to remove', aplIndex);
     const opponentBoard = boards[currentOpponent];
     const pieceToRemoveIsInMill = isIndexInMill(
       opponentBoard,
@@ -210,12 +202,10 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
       pieceToRemoveIsInMill &&
       areNonMillOpponentPiecesAvailable(opponentBoard)
     ) {
-      console.log('this piece is in a mill and others are available');
+      // this piece is in a mill and others are available
       feedback.reset('locked in mill');
     } else {
-      console.log(
-        'either piece is not in a mill, or no other non-mill pieces are available'
-      );
+      // either piece is not in a mill, or no other non-mill pieces are available
 
       const newBoard = aplRemovePiece(boards[currentOpponent], aplIndex);
       boardsCursor.resetIn(currentOpponent, newBoard);
@@ -223,10 +213,8 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
       if (currentPhase === 1) {
         action.reset('place');
       } else {
-        console.log('LIFT 3');
         action.reset('lift');
       }
-      console.log('ENDTURN 3');
       endTurn();
     }
   } else if (currentAction === 'lift' && clickedOnOwnPiece) {
@@ -236,14 +224,11 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
       connectedPointsGraph[aplIndex]
     );
 
-    console.log('openPoints', openPoints);
-
     if (isFlying.deref()[currentTurn]) {
-      console.log('yep we are flying');
+      // flying
       action.reset('place');
       liftedAplIndex.reset(aplIndex);
     } else if (!!openPoints.length) {
-      console.log('PLACE 2');
       action.reset('place');
       possiblePlaces.reset(openPoints);
       liftedAplIndex.reset(aplIndex);
@@ -251,10 +236,9 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
       feedback.reset('immovable');
     }
   } else if (currentAction === 'remove' && !clickedOnOpponent) {
-    console.log('cannot remove this piece');
+    // un-removable piece
     feedback.reset('invalid');
   } else {
-    console.log('final else state');
     if (currentPhase === 2) {
       action.reset('lift');
     }
@@ -323,9 +307,3 @@ start(() => [
   ],
   ['p.feedback', feedback.deref()],
 ]);
-
-window.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    console.log('enter', boardsCursor.deref());
-  }
-});
