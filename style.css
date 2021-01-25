@@ -5,13 +5,16 @@
   --gray-lighter: #eee;
   --gray: #bbb;
   --grid-gap: 10px;
-  --surround: 150%;
+  --piece-diameter-md: 34px;
+  --piece-diameter-sm: 32px;
+  --piece-diameter-xs: 30px;
+  --piece-diameter: 26px;
+  --point-diameter-large: 8px;
+  --point-diameter-small: 5px;
+  --point-diameter: 4px;
   --point-surround-large: 16px;
   --point-surround: 12px;
-  --piece-diameter-large: 34px;
-  --piece-diameter: 30px;
-  --point-diameter-large: 8px;
-  --point-diameter: 5px;
+  --surround: 150%;
 }
 body {
   margin: 0;
@@ -230,11 +233,25 @@ button:hover {
   border-radius: 50%;
   box-shadow: 1px 1px 0px var(--gray);
 }
+@media (min-width: 400px) {
+  .piece.w,
+  .piece.b {
+    width: var(--piece-diameter-xs);
+    height: var(--piece-diameter-xs);
+  }
+}
+@media (min-width: 768px) {
+  .piece.w,
+  .piece.b {
+    width: var(--piece-diameter-sm);
+    height: var(--piece-diameter-sm);
+  }
+}
 @media (min-width: 992px) {
   .piece.w,
   .piece.b {
-    width: var(--piece-diameter-large);
-    height: var(--piece-diameter-large);
+    width: var(--piece-diameter-md);
+    height: var(--piece-diameter-md);
   }
 }
 .piece.w {
@@ -296,8 +313,18 @@ button:hover {
   text-align: center;
 }
 .action {
-  font-size: 0.95em;
+  font-size: 0.85em;
   opacity: 0.7;
+}
+@media (min-width: 400px) {
+  .action {
+    font-size: 0.9em;
+  }
+}
+@media (min-width: 768px) {
+  .action {
+    font-size: 0.95em;
+  }
 }
 .end .turn-pieces-container,
 .end .action {
@@ -306,11 +333,23 @@ button:hover {
 .turn-pieces-container {
   display: flex;
 }
-
 .turn-piece-container {
   position: relative;
   transform: scale(0.77);
   flex: 1;
+}
+.turn-piece-container + .turn-piece-container {
+  margin-left: 0.5em;
+}
+@media (min-width: 400px) {
+  .turn-piece-container + .turn-piece-container {
+    margin-left: 0.2em;
+  }
+}
+@media (min-width: 768px) {
+  .turn-piece-container + .turn-piece-container {
+    margin-left: 0;
+  }
 }
 @media (min-width: 992px) {
   .turn-piece-container {
@@ -328,16 +367,33 @@ button:hover {
   position: absolute;
   top: 50%;
   left: 50%;
+  width: 160%;
+  height: 160%;
   transform: translateY(-50%) translateX(-50%);
-  width: 180%;
-  height: 180%;
   border: 1px solid var(--gray-light);
+}
+@media (min-width: 400px) {
+  .turn-piece-container .piece.w.current-w:after,
+  .turn-piece-container .piece.b.current-b:after {
+    width: 180%;
+    height: 180%;
+  }
 }
 .reset {
   text-transform: uppercase;
-  font-size: 0.8em;
+  font-size: 0.75em;
   letter-spacing: 0.08em;
   opacity: 0;
+}
+@media (min-width: 400px) {
+  .reset {
+    font-size: 0.77em;
+  }
+}
+@media (min-width: 768px) {
+  .reset {
+    font-size: 0.8em;
+  }
 }
 .end .reset {
   cursor: pointer;
@@ -348,10 +404,20 @@ button:hover {
   text-align: center;
   min-height: 60px;
   font-style: italic;
-  font-size: 0.85em;
+  font-size: 0.75em;
   padding-top: 1em;
   cursor: default;
   opacity: 0.8;
+}
+@media (min-width: 400px) {
+  .feedback {
+    font-size: 0.8em;
+  }
+}
+@media (min-width: 768px) {
+  .feedback {
+    font-size: 0.85em;
+  }
 }
 
 /* fade */
