@@ -17,9 +17,6 @@
     "@thi.ng/api": "latest",
     "@thi.ng/atom": "latest",
     "@thi.ng/hdom": "latest",
-    "@thi.ng/paths": "latest",
-    "@thi.ng/strings": "^1.10.0",
-    "@thi.ng/transducers": "latest",
-    "apl": "^0.1.15"
+    "@thi.ng/paths": "latest"
   }
 }
