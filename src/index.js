@@ -47,6 +47,7 @@ const initialDb = {
   possiblePlaces: [],
   turn: 'w',
   action: 'place',
+  hasInitiallyLoaded: false,
 };
 
 const db = defAtom(initialDb);
@@ -56,6 +57,7 @@ const blockInteractions = defAtom(false);
 const action = defCursor(db, 'action');
 const boardsCursor = defCursor(db, 'boards');
 const feedback = defCursor(db, 'feedback');
+const hasInitiallyLoaded = defCursor(db, 'hasInitiallyLoaded');
 const isFlying = defCursor(db, 'isFlying');
 const liftedAplIndex = defCursor(db, 'liftedAplIndex');
 const millCount = defView(db, ['numberOfMills']);
@@ -277,13 +279,21 @@ const boardsView = defView(db, ['boards'], (boards) => [
 start(() => [
   'div.app-inner',
   {
-    class: `phase-${phase.deref()} turn-${turn.deref()} action-${action.deref()}`,
+    class: `phase-${phase.deref()} turn-${turn.deref()} action-${action.deref()} ${
+      hasInitiallyLoaded.deref() ? 'has-initially-loaded' : ''
+    }`,
   },
-  ['div.board', boardsView],
+  [
+    'div.board',
+    {
+      class: 'fade-in-1',
+    },
+    boardsView,
+  ],
   [
     'div.controls',
     {
-      class: action.deref(),
+      class: `${action.deref()} fade-in-2`,
     },
     [
       'div.turn-pieces-container',
@@ -307,3 +317,11 @@ start(() => [
   ],
   ['p.feedback', feedback.deref()],
 ]);
+
+document.onreadystatechange = () => {
+  if (document.readyState === 'complete') {
+    setTimeout(() => {
+      hasInitiallyLoaded.reset(true);
+    }, 0);
+  }
+};
