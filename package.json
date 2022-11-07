@@ -1,8 +1,8 @@
 {
   "name": "merels",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "main": "index.js",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "scripts": {
     "clean": "rm -rf .cache build out",
     "build": "yarn clean && parcel build index.html -d out --no-source-maps --no-cache --experimental-scope-hoisting --detailed-report --public-url ./",
