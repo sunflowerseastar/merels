@@ -1,8 +1,6 @@
 import { defAtom, defCursor, defView } from '@thi.ng/atom';
-import { resetIn } from '@thi.ng/paths';
 import { start } from '@thi.ng/hdom';
 import {
-  aplPlaceAndRemovePiece,
   aplPlacePiece,
   aplRemovePiece,
   boardsToGridArray,
@@ -18,16 +16,42 @@ import {
   connectedPointsGraph,
   gridIndexToAplIndex,
 } from './utility';
-import {
-  boardDbAtPhase2,
-  boardDbBeforePhase3,
-  boardWithFourBlack,
-} from './testBoards';
+// import {
+//   boardDbAtPhase2,
+//   boardDbBeforePhase3,
+//   boardWithFourBlack,
+// } from './testBoards';
 
-const initialDb = {
+type Turn = 'w' | 'b';
+export interface Boards {
+  w: number[];
+  b: number[];
+}
+interface WBNums {
+  w: number;
+  b: number;
+}
+interface WBBooleans {
+  w: boolean;
+  b: boolean;
+}
+interface State {
+  phase: number;
+  feedback: string;
+  liftedAplIndex: number;
+  boards: Boards;
+  isFlying: WBBooleans;
+  numberOfMills: WBNums;
+  numberOfPiecesPlaced: WBNums;
+  possiblePlaces: number[];
+  turn: Turn;
+  action: Actions;
+}
+type Actions = 'place' | 'lift' | 'remove' | 'end';
+const initialDb: State = {
   phase: 1,
   feedback: '',
-  liftedAplIndex: null,
+  liftedAplIndex: -1,
   boards: {
     w: Array.from(Array(27), (_) => 0),
     b: Array.from(Array(27), (_) => 0),
@@ -47,32 +71,35 @@ const initialDb = {
   possiblePlaces: [],
   turn: 'w',
   action: 'place',
-  hasInitiallyLoaded: false,
 };
 
-const db = defAtom(initialDb);
+const db = defAtom<State>(initialDb);
 // const db = defAtom(boardDbAtPhase2);
-const blockInteractions = defAtom(false);
+// const db = defAtom(boardWithFourBlack);
 
-const action = defCursor(db, 'action');
-const boardsCursor = defCursor(db, 'boards');
-const feedback = defCursor(db, 'feedback');
-const hasInitiallyLoaded = defCursor(db, 'hasInitiallyLoaded');
-const isFlying = defCursor(db, 'isFlying');
-const liftedAplIndex = defCursor(db, 'liftedAplIndex');
-const millCount = defView(db, ['numberOfMills']);
+const blockInteractions = defAtom<boolean>(false);
+const hasInitiallyLoaded = defAtom<boolean>(false);
+const action = defCursor(db, ['action']);
+const boardsCursor = defCursor(db, ['boards']);
+const feedback = defCursor(db, ['feedback']);
+const isFlying = defCursor(db, ['isFlying']);
+const liftedAplIndex = defCursor(db, ['liftedAplIndex']);
 const millCursor = defCursor(db, ['numberOfMills']);
 const numPiecesPlacedCursor = defCursor(db, ['numberOfPiecesPlaced']);
-const opponent = defView(db, 'turn', (x) => (x === 'w' ? 'b' : 'w'));
-const phase = defCursor(db, 'phase');
-const possiblePlaces = defCursor(db, 'possiblePlaces');
-const turn = defCursor(db, 'turn');
+
+const opponent = (x: Turn) => (x === 'w' ? 'b' : 'w')
+
+const phase = defCursor(db, ['phase']);
+const possiblePlaces = defCursor(db, ['possiblePlaces']);
+const turn = defCursor(db, ['turn']);
 
 const checkAdvanceToPhase2 = () => {
-  const currentNumPlaced = numPiecesPlacedCursor.deref();
-  const currentOpponent = opponent.deref();
+  const currentNumPlaced: WBNums = numPiecesPlacedCursor.deref();
+  // const currentOpponent: Turn = opponent.deref() || initialTurn;
+  // const currentOpponent: Turn = opponent.deref();
   const currentPhase = phase.deref();
   const currentTurn = turn.deref();
+  const currentOpponent = opponent(currentTurn)
 
   // check to see if we should advance from phase 1 to phase 2
   if (
@@ -89,23 +116,22 @@ const checkAdvanceToPhase2 = () => {
   if (currentPhase === 2) {
     const board = boardsCursor.deref();
     const numberOfPiecesOpponent = getNumberOfPieces(board[currentOpponent]);
-    const numberOfPiecesCurrentTurn = getNumberOfPieces(board[currentTurn]);
 
     if (numberOfPiecesOpponent === 3) {
       feedback.reset('flying');
-      isFlying.resetIn(currentOpponent, true);
+      isFlying.resetIn([currentOpponent], true);
     }
     if (numberOfPiecesOpponent === 2) {
       feedback.reset(`${currentTurn} wins`);
-      isFlying.resetIn(currentOpponent, true);
+      isFlying.resetIn([currentOpponent], true);
     }
   }
 };
 
 const endGameOrChangeTurn = () => {
-  const currentOpponent = opponent.deref();
   const currentPhase = phase.deref();
   const currentTurn = turn.deref();
+  const currentOpponent = opponent(currentTurn)
   const boards = boardsCursor.deref();
   const numberOfPiecesOpponent = getNumberOfPieces(boards[currentOpponent]);
 
@@ -124,10 +150,10 @@ const endGameOrChangeTurn = () => {
     // end game
     feedback.reset(`${currentTurn === 'w' ? 'white' : 'black'} wins`);
     action.reset('end');
-    turn.reset('');
+    // turn.reset('');
   } else {
     // change turn
-    turn.reset(opponent.deref());
+    turn.reset(currentOpponent);
   }
 };
 
@@ -137,13 +163,17 @@ const endTurn = () => {
   endGameOrChangeTurn();
 };
 
-const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
+const onClickPoint = (
+  boards: Boards,
+  aplIndex: number,
+  pieceAtPoint: Turn | ''
+) => {
   feedback.reset('');
 
   const currentAction = action.deref();
-  const currentOpponent = opponent.deref();
   const currentPhase = phase.deref();
   const currentTurn = turn.deref();
+  const currentOpponent = opponent(currentTurn);
 
   const clickedOnOpponent = pieceAtPoint === currentOpponent;
   const clickedOnOwnPiece = pieceAtPoint === currentTurn;
@@ -151,10 +181,10 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
   if (currentPhase === 1 && currentAction === 'place' && !pieceAtPoint) {
     // update board
     const boardAfterPlace = aplPlacePiece(boards[currentTurn], aplIndex);
-    boardsCursor.resetIn(currentTurn, boardAfterPlace);
+    boardsCursor.resetIn([currentTurn], boardAfterPlace);
 
     // update numPiecesPlaced
-    numPiecesPlacedCursor.swapIn(currentTurn, (x) => x + 1);
+    numPiecesPlacedCursor.swapIn([currentTurn], (x: number) => x + 1);
 
     // either continue or end turn depending on if there's a new mill
     const previousNumberOfMills = getNumberOfMills(boards[currentTurn]);
@@ -175,7 +205,7 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
         liftedAplIndex.deref()
       );
       const boardAfterPlace = aplPlacePiece(boardAfterRemoval, aplIndex);
-      boardsCursor.resetIn(currentTurn, boardAfterPlace);
+      boardsCursor.resetIn([currentTurn], boardAfterPlace);
 
       // either continue or end turn depending on if there's a new mill
       const previousNumberOfMills = getNumberOfMills(boardAfterRemoval);
@@ -191,7 +221,6 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
       action.reset('lift');
     }
 
-    liftedAplIndex.reset(null);
     possiblePlaces.reset([]);
   } else if (currentAction === 'remove' && clickedOnOpponent) {
     const opponentBoard = boards[currentOpponent];
@@ -210,8 +239,8 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
       // either piece is not in a mill, or no other non-mill pieces are available
 
       const newBoard = aplRemovePiece(boards[currentOpponent], aplIndex);
-      boardsCursor.resetIn(currentOpponent, newBoard);
-      millCursor.resetIn(currentOpponent, getNumberOfMills(newBoard));
+      boardsCursor.resetIn([currentOpponent], newBoard);
+      millCursor.resetIn([currentOpponent], getNumberOfMills(newBoard));
       if (currentPhase === 1) {
         action.reset('place');
       } else {
@@ -222,7 +251,7 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
   } else if (currentAction === 'lift' && clickedOnOwnPiece) {
     const openPoints = openPointsAdjacentToPiece(
       boards[currentTurn],
-      boards[currentOpponent],
+      boards[opponent(currentTurn)],
       connectedPointsGraph[aplIndex]
     );
 
@@ -249,9 +278,9 @@ const onClickPoint = (boards, aplIndex, pieceAtPoint) => {
 
 const boardsView = defView(db, ['boards'], (boards) => [
   'div.grid',
-  boardsToGridArray(boards).map((x, i) => {
-    const aplIndex = gridIndexToAplIndex[i];
-    const pieceAtPoint = x === 1 ? 'w' : x === 2 ? 'b' : '';
+  boardsToGridArray(boards).map((x: number, i: number) => {
+    const aplIndex: number = gridIndexToAplIndex[i];
+    const pieceAtPoint: Turn | '' = x === 1 ? 'w' : x === 2 ? 'b' : '';
 
     return typeof aplIndex !== 'undefined'
       ? [

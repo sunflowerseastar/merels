@@ -1,7 +1,11 @@
 import { isIndexInMill, openPointsAdjacentToPiece } from './aplGameFunctions';
 
+interface PositionDictionary {
+  [index: number]: number;
+}
+
 // takes a board index, looks it up, and if it's a point position, returns that
-export const gridIndexToAplIndex = {
+export const gridIndexToAplIndex: PositionDictionary = {
   0: 0,
   3: 1,
   6: 2,
@@ -28,7 +32,11 @@ export const gridIndexToAplIndex = {
   48: 8,
 };
 
-export const aplIndexToMillIndex = {
+interface PositionsDictionary {
+  [index: number]: number[];
+}
+
+export const aplIndexToMillIndex: PositionsDictionary = {
   0: [0, 1],
   1: [0, 12],
   2: [0, 2],
@@ -57,7 +65,7 @@ export const aplIndexToMillIndex = {
   26: [10, 11],
 };
 
-export const connectedPointsGraph = {
+export const connectedPointsGraph: PositionsDictionary = {
   0: [1, 3],
   1: [0, 2, 10],
   2: [1, 5],
@@ -86,9 +94,10 @@ export const connectedPointsGraph = {
   26: [23, 25],
 };
 
-export const areNonMillOpponentPiecesAvailable = (opponentBoard) =>
+export type Board = number[];
+export const areNonMillOpponentPiecesAvailable = (opponentBoard: Board) =>
   !!opponentBoard
-    .reduce((acc, x, i) => {
+    .reduce((acc: number[], x: number, i: number) => {
       // 'for each' of the opponents' pieces
       if (!!x) {
         acc.push(
@@ -102,11 +111,17 @@ export const areNonMillOpponentPiecesAvailable = (opponentBoard) =>
     }, [])
     // remove the pieces that are in mills,
     // and see if any pieces not in mills are left
-    .filter((x) => x === 0).length;
+    .filter((x: number) => x === 0).length;
 
-export const areTherePossibleAdjacentMoves = (playerToCheckBoard, otherPlayerBoard) =>
+export const areTherePossibleAdjacentMoves = (
+  playerToCheckBoard: Board,
+  otherPlayerBoard: Board
+) =>
   !!playerToCheckBoard
-    .reduce((acc, x, i) => (x ? [...acc, i] : acc), [])
+    .reduce(
+      (acc: number[], x: number, i: number) => (x ? [...acc, i] : acc),
+      []
+    )
     .map((x) =>
       openPointsAdjacentToPiece(
         playerToCheckBoard,
@@ -114,4 +129,4 @@ export const areTherePossibleAdjacentMoves = (playerToCheckBoard, otherPlayerBoa
         connectedPointsGraph[x]
       )
     )
-    .reduce((acc, x) => acc + x.length, 0);
+    .reduce((acc: number, x: []) => acc + x.length, 0);
