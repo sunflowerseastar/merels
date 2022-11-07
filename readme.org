@@ -2,18 +2,28 @@
 
 ** Quick Start
 
+[[https://classic.yarnpkg.com/lang/en/][Yarn]], [[https://vitejs.dev/][Vite]].
+
 #+begin_src sh
 yarn
-yarn start
+yarn start # localhost:5137
+tsc --no-emit # type check
+
+yarn build
+yarn preview # localhost:4137 to check build
 #+end_src
 
-localhost:8080
+Auto-prettier with [[https://github.com/toplenboren/simple-git-hooks][simple-git-hooks]] + [[https://github.com/okonet/lint-staged][lint-staged]].
 
 ** Dependencies
 
 *** APL
 
-[[http://archive.vector.org.uk/art10501160][Nick Nickolov's APL]] is hard-copied into ~lib/apl~, with a few helper functions cherry-picked from the [[https://gitlab.com/n9n/apl][GitLab repo]] into ~lib/aplLibraryHelpers.js~. See ~lib/apl/license~ and ~lib/apl/readme.md~. My code calls the library and helpers from ~src/aplGameFunctions.js~.
+[[http://archive.vector.org.uk/art10501160][Nick Nickolov's APL]] is hard-copied into ~lib/apl~, with a few helper functions cherry-picked from the [[https://gitlab.com/n9n/apl][GitLab repo]] into ~lib/aplLibraryHelpers.ts~. See ~lib/apl/license~ and ~lib/apl/readme.md~. My code calls the library and helpers from ~src/aplGameFunctions.ts~.
+
+*** TypeScript
+
+Note that ~"allowSyntheticDefaultImports": true,~ is required since ~lib/apl/apl.js~ is commonJS (~module.exports~).
 
 *** Umbrella
 
@@ -73,7 +83,7 @@ Apl index:
 6 7 8   15 16 17   24 25 26
 #+end_src
 
-Apl positions using the grid indices (translation with utility.js ~gridIndexToAplIndex~):
+Apl positions using the grid indices (translation with utility.ts ~gridIndexToAplIndex~):
 
 #+begin_src
  0  3  6    8 10 12   16 17 18

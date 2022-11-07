@@ -4,19 +4,31 @@
   "main": "index.js",
   "license": "GPL-3.0",
   "scripts": {
-    "clean": "rm -rf .cache build out",
-    "build": "yarn clean && parcel build index.html -d out --no-source-maps --no-cache --experimental-scope-hoisting --detailed-report --public-url ./",
-    "start": "parcel index.html -p 8080 --no-cache"
-  },
-  "devDependencies": {
-    "parcel-bundler": "^1.12.4",
-    "terser": "^5.2.1",
-    "typescript": "^4.0.2"
+    "build": "tsc && vite build",
+    "prettier:check": "prettier --check '**/*.{html,ts,js,css,json}'",
+    "prettier:write": "prettier --write '**/*.{html,ts,js,css,json}'",
+    "preview": "vite preview",
+    "start": "vite"
   },
   "dependencies": {
-    "@thi.ng/api": "latest",
-    "@thi.ng/atom": "latest",
-    "@thi.ng/hdom": "latest",
-    "@thi.ng/paths": "latest"
+    "@thi.ng/api": "^8.4.5",
+    "@thi.ng/atom": "^5.1.21",
+    "@thi.ng/hdom": "^9.1.24",
+    "@thi.ng/paths": "^5.1.21"
+  },
+  "devDependencies": {
+    "lint-staged": "^13.0.3",
+    "prettier": "^2.7.1",
+    "simple-git-hooks": "^2.8.1",
+    "typescript": "^4.8.4",
+    "vite": "^3.2.2"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "*.{tsx,js,css,md,json}": [
+      "prettier --write"
+    ]
   }
 }
