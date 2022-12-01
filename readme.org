@@ -23,7 +23,7 @@ Auto-prettier with [[https://github.com/toplenboren/simple-git-hooks][simple-git
 
 *** TypeScript
 
-Note that ~"allowSyntheticDefaultImports": true,~ is required since ~lib/apl/apl.js~ is commonJS (~module.exports~).
+Note that ~allowSyntheticDefaultImports~ is set to ~true~ in ~tsconfig.json~ since ~lib/apl/apl.js~ is commonJS (~module.exports~).
 
 *** Umbrella
 
