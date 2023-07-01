@@ -150,7 +150,6 @@ const endGameOrChangeTurn = () => {
     // end game
     feedback.reset(`${currentTurn === 'w' ? 'white' : 'black'} wins`);
     action.reset('end');
-    // turn.reset('');
   } else {
     // change turn
     turn.reset(currentOpponent);
