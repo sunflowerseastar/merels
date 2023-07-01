@@ -1702,6 +1702,11 @@ wrappy@1:
   resolved "https://registry.yarnpkg.com/wrappy/-/wrappy-1.0.2.tgz#b5243d8f3ec1aa35f1364605bc0d1036e30ab69f"
   integrity sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==
 
+xstate@^5.0.0-beta.14:
+  version "5.0.0-beta.14"
+  resolved "https://registry.yarnpkg.com/xstate/-/xstate-5.0.0-beta.14.tgz#2ca14b8bd299294077621a6e0b95cc7fac10db00"
+  integrity sha512-TIo+7AN/P4BRwugiiZnrNugv2pG55/hYbswECy6me9JL2mSYnpMg+nMF6piVKjd5C4m4RB8+/sGJuMV0XfF23Q==
+
 yallist@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-4.0.0.tgz#9bb92790d9c0effec63be73519e11a35019a3a72"

@@ -16,7 +16,8 @@
     "@thi.ng/api": "^8.4.5",
     "@thi.ng/atom": "^5.1.21",
     "@thi.ng/hdom": "^9.1.24",
-    "@thi.ng/paths": "^5.1.21"
+    "@thi.ng/paths": "^5.1.21",
+    "xstate": "^5.0.0-beta.14"
   },
   "devDependencies": {
     "cypress": "^12.15.0",
