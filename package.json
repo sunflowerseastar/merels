@@ -17,6 +17,8 @@
     "@thi.ng/atom": "^5.1.21",
     "@thi.ng/hdom": "^9.1.24",
     "@thi.ng/paths": "^5.1.21",
+    "@thi.ng/rdom": "^0.11.4",
+    "@thi.ng/rstream": "^8.0.4",
     "xstate": "^5.0.0-beta.15"
   },
   "devDependencies": {
