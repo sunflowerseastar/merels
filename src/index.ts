@@ -1,5 +1,22 @@
-import { defAtom, defCursor, defView } from '@thi.ng/atom';
-import { start } from '@thi.ng/hdom';
+import { $compile, $list } from '@thi.ng/rdom';
+import {
+  // comp,
+  // push,
+  // filter,
+  // transform,
+  indexed,
+  // map,
+  // mapIndexed,
+  // transduce,
+} from '@thi.ng/transducers';
+import { reactive } from '@thi.ng/rstream';
+import { defAtom, defCursor } from '@thi.ng/atom';
+// import { defAtom, defCursor, defView } from '@thi.ng/atom';
+// import { start } from '@thi.ng/hdom';
+// import { useMachine } from '@xstate/react';
+import { interpret } from 'xstate';
+import { merelsMachine } from './merelsMachine';
+
 import {
   aplPlacePiece,
   aplRemovePiece,
@@ -87,7 +104,7 @@ const liftedAplIndex = defCursor(db, ['liftedAplIndex']);
 const millCursor = defCursor(db, ['numberOfMills']);
 const numPiecesPlacedCursor = defCursor(db, ['numberOfPiecesPlaced']);
 
-const opponent = (x: Turn) => (x === 'w' ? 'b' : 'w')
+const opponent = (x: Turn) => (x === 'w' ? 'b' : 'w');
 
 const phase = defCursor(db, ['phase']);
 const possiblePlaces = defCursor(db, ['possiblePlaces']);
@@ -99,7 +116,7 @@ const checkAdvanceToPhase2 = () => {
   // const currentOpponent: Turn = opponent.deref();
   const currentPhase = phase.deref();
   const currentTurn = turn.deref();
-  const currentOpponent = opponent(currentTurn)
+  const currentOpponent = opponent(currentTurn);
 
   // check to see if we should advance from phase 1 to phase 2
   if (
@@ -131,7 +148,7 @@ const checkAdvanceToPhase2 = () => {
 const endGameOrChangeTurn = () => {
   const currentPhase = phase.deref();
   const currentTurn = turn.deref();
-  const currentOpponent = opponent(currentTurn)
+  const currentOpponent = opponent(currentTurn);
   const boards = boardsCursor.deref();
   const numberOfPiecesOpponent = getNumberOfPieces(boards[currentOpponent]);
 
@@ -275,9 +292,23 @@ const onClickPoint = (
   }
 };
 
-const boardsView = defView(db, ['boards'], (boards) => [
+const actor = interpret(merelsMachine).start();
+
+const actorBoards = actor.getSnapshot().context.boards;
+const boards = reactive(actorBoards);
+
+actor.subscribe((snapshot) => {
+  console.log('actor :: current state (snapshot value)', snapshot.value);
+  boards.next(snapshot.context.boards);
+});
+
+const boardView = $list(
+  boards.map((board) => [...indexed(0, boardsToGridArray(board))]),
   'div.grid',
-  boardsToGridArray(boards).map((x: number, i: number) => {
+  {},
+  ([i, x]) => {
+    // console.log('i, x', i, x);
+
     const aplIndex: number = gridIndexToAplIndex[i];
     const pieceAtPoint: Turn | '' = x === 1 ? 'w' : x === 2 ? 'b' : '';
 
@@ -287,64 +318,100 @@ const boardsView = defView(db, ['boards'], (boards) => [
           {
             'data-lines': `line-${aplIndex}`,
             onclick: () => {
-              if (!blockInteractions.deref()) {
-                blockInteractions.reset(true);
-
-                onClickPoint(boards, aplIndex, pieceAtPoint);
-
-                setTimeout(() => {
-                  blockInteractions.reset(false);
-                }, 0);
-              }
+              console.log(
+                'i, x, aplIndex, pieceAtPoint',
+                i,
+                x,
+                aplIndex,
+                pieceAtPoint
+              );
+              actor.send(
+                { type: 'point.click', aplIndex, pieceAtPoint, test: 'a' }
+              );
             },
           },
           ['span.piece', { class: pieceAtPoint || 'empty' }, ''],
         ]
       : ['span', ''];
-  }),
-]);
+  }
+);
 
-start(() => [
-  'div.app-inner',
-  {
-    class: `phase-${phase.deref()} turn-${turn.deref()} action-${action.deref()} ${
-      hasInitiallyLoaded.deref() ? 'has-initially-loaded' : ''
-    }`,
-  },
-  [
-    'div.board',
-    {
-      class: 'fade-in-1',
-    },
-    boardsView,
-  ],
-  [
-    'div.controls',
-    {
-      class: `${action.deref()} fade-in-2`,
-    },
-    [
-      'div.turn-pieces-container',
-      [
-        'div.turn-piece-container',
-        ['span.piece.w', { class: `current-${turn.deref()}` }],
-      ],
-      [
-        'div.turn-piece-container',
-        ['span.piece.b', { class: `current-${turn.deref()}` }],
-      ],
-    ],
-    [
-      'p.reset',
-      {
-        onclick: () => (action.deref() === 'end' ? db.reset(initialDb) : {}),
-      },
-      action.deref() === 'end' ? 'restart' : '',
-    ],
-    ['p.action', action.deref()],
-  ],
-  ['p.feedback', feedback.deref()],
-]);
+$compile(['div#app', {}, ['div.merels', {}, boardView]]).mount(document.body);
+
+// const boardsView = defView(db, ['boards'], (boards) => {
+//   console.log('boardsView', boards);
+//   console.log('boardsToGridArray(boards)', boardsToGridArray(boards));
+//   return [
+//     'div.grid',
+//     boardsToGridArray(boards).map((x: number, i: number) => {
+//       const aplIndex: number = gridIndexToAplIndex[i];
+//       const pieceAtPoint: Turn | '' = x === 1 ? 'w' : x === 2 ? 'b' : '';
+
+// return typeof aplIndex !== 'undefined'
+//   ? [
+//       'span.point',
+//       {
+//         'data-lines': `line-${aplIndex}`,
+//         onclick: () => {
+//           if (!blockInteractions.deref()) {
+//             blockInteractions.reset(true);
+
+//             onClickPoint(boards, aplIndex, pieceAtPoint);
+
+//             setTimeout(() => {
+//               blockInteractions.reset(false);
+//             }, 0);
+//           }
+//         },
+//       },
+//       ['span.piece', { class: pieceAtPoint || 'empty' }, ''],
+//     ]
+//         : ['span', ''];
+//     }),
+//   ];
+// });
+
+// start(() => [
+//   'div.app-inner',
+//   {
+//     class: `phase-${phase.deref()} turn-${turn.deref()} action-${action.deref()} ${
+//       hasInitiallyLoaded.deref() ? 'has-initially-loaded' : ''
+//     }`,
+//   },
+//   [
+//     'div.board',
+//     {
+//       class: 'fade-in-1',
+//     },
+//     boardsView,
+//   ],
+//   [
+//     'div.controls',
+//     {
+//       class: `${action.deref()} fade-in-2`,
+//     },
+//     [
+//       'div.turn-pieces-container',
+//       [
+//         'div.turn-piece-container',
+//         ['span.piece.w', { class: `current-${turn.deref()}` }],
+//       ],
+//       [
+//         'div.turn-piece-container',
+//         ['span.piece.b', { class: `current-${turn.deref()}` }],
+//       ],
+//     ],
+//     [
+//       'p.reset',
+//       {
+//         onclick: () => (action.deref() === 'end' ? db.reset(initialDb) : {}),
+//       },
+//       action.deref() === 'end' ? 'restart' : '',
+//     ],
+//     ['p.action', action.deref()],
+//   ],
+//   ['p.feedback', feedback.deref()],
+// ]);
 
 document.onreadystatechange = () => {
   if (document.readyState === 'complete') {
