@@ -1,15 +1,16 @@
-import { $compile, $list } from '@thi.ng/rdom';
+import { $compile, $list, $text, $wrapText } from '@thi.ng/rdom';
 import {
   // comp,
+  cycle,
   // push,
   // filter,
   // transform,
   indexed,
-  // map,
+  map,
   // mapIndexed,
   // transduce,
 } from '@thi.ng/transducers';
-import { reactive } from '@thi.ng/rstream';
+import { fromView, reactive, stream } from '@thi.ng/rstream';
 import { defAtom, defCursor } from '@thi.ng/atom';
 // import { defAtom, defCursor, defView } from '@thi.ng/atom';
 // import { start } from '@thi.ng/hdom';
@@ -108,7 +109,7 @@ const opponent = (x: Turn) => (x === 'w' ? 'b' : 'w');
 
 const phase = defCursor(db, ['phase']);
 const possiblePlaces = defCursor(db, ['possiblePlaces']);
-const turn = defCursor(db, ['turn']);
+// const turn = defCursor(db, ['turn']);
 
 const checkAdvanceToPhase2 = () => {
   const currentNumPlaced: WBNums = numPiecesPlacedCursor.deref();
@@ -296,11 +297,42 @@ const actor = interpret(merelsMachine).start();
 
 const actorBoards = actor.getSnapshot().context.boards;
 const boards = reactive(actorBoards);
+// const actorTurn = actor.getSnapshot().context.turn;
+// const turn = reactive(actorTurn);
+const t3 = reactive('w');
+console.log('t3', t3);
+
+// const t2 = stream<Turn>();
+// actor.subscribe((state) => {
+//   console.log(':: state.context.turn', state.context.turn);
+//   return t2.next(state.context.turn);
+// });
+
+// console.log('t2', t2);
+// const t3 = fromView(t2);
 
 actor.subscribe((snapshot) => {
-  console.log('actor :: current state (snapshot value)', snapshot.value);
+  // console.log('actor :: current state (snapshot value)', snapshot.value);
+  // console.log('snapshot', snapshot);
+  // console.log('snapshot.context', snapshot.context);
+  console.log('snapshot.context.turn', snapshot.context.turn);
   boards.next(snapshot.context.boards);
+  console.log('before turn.next');
+  // t3.next(snapshot.context.turn);
+  t3.next('b');
+  console.log('after t3.next');
 });
+
+// reactive value
+const bg = reactive('w');
+
+// color options (infinite iterable)
+const colors = cycle(['b', 'w']);
+
+// event handler
+// const nextColor = () => bg.next(<string>colors.next().value);
+const nextColor = () => bg.next(<string>colors.next().value);
+// const nextColor = () => t3.next(<string>colors.next().value);
 
 const boardView = $list(
   boards.map((board) => [...indexed(0, boardsToGridArray(board))]),
@@ -332,11 +364,84 @@ const boardView = $list(
           },
           ['span.piece', { class: pieceAtPoint || 'empty' }, ''],
         ]
-      : ['span', ''];
+      : ['span', {}, ''];
   }
 );
 
-$compile(['div#app', {}, ['div.merels', {}, boardView]]).mount(document.body);
+console.log('t3', t3);
+console.log('t3.deref()', t3.deref());
+
+$compile([
+  'div#app',
+  {},
+  [
+    'div.app-inner',
+    {
+      class: 'test',
+    },
+    [
+      'div',
+      {},
+      // transformed color as title (aka derived view)
+      ['h1', {}, bg.map((col) => `Hello, ${col}!`)],
+      [
+        // tag with Emmet-style ID & classes
+        'button#foo.w4.pa3.bn',
+        {
+          // reactive CSS background property
+          style: { background: bg },
+          onclick: nextColor,
+        },
+        // reactive button label
+        bg,
+      ],
+    ],
+    ['div.board', {}, boardView],
+    [
+      'div.controls',
+      {},
+      [
+        'div.turn-pieces-container',
+        {},
+        [
+          'div.turn-piece-container',
+          {},
+          ['span.piece.w', { class: `current-${t3.deref()}` }],
+        ],
+        [
+          'div.turn-piece-container',
+          {},
+          // TODO get the classname to work -- use $$ and $p() ..?
+          ['span.piece.b', { class: `current-${bg.deref()}` }],
+        ],
+      ],
+      [
+        'p.reset',
+        {
+          onclick: () => {
+            console.log('onclick reset');
+          },
+        },
+        '.',
+      ],
+      ['p.action', {}, 'action stub :: ' + bg + ' :d: ' + t3.deref()],
+      ['p', {}, 'wont work :: ', ['span',{}, bg]],
+      ['p', {}, bg],
+      [
+        // tag with Emmet-style ID & classes
+        'button#foo.w4.pa3.bn',
+        {
+          // reactive CSS background property
+          style: { background: bg },
+          onclick: nextColor,
+        },
+        // reactive button label
+        bg,
+      ]
+    ],
+    ['p.feedback', {}, 'feedback stub'],
+  ],
+]).mount(document.body);
 
 // const boardsView = defView(db, ['boards'], (boards) => {
 //   console.log('boardsView', boards);

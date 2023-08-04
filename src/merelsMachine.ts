@@ -181,7 +181,7 @@ export const merelsMachine = createMachine(
   {
     actions: {
       test: ({ action }) => {
-        console.log(action.params);
+        // console.log(action.params);
       },
       place: assign({
         boards: ({ context: { boards, turn }, event: { aplIndex } }) => ({
@@ -197,22 +197,22 @@ export const merelsMachine = createMachine(
     guards: {
       'point is occupied': ({ event: { pieceAtPoint } }) => !!pieceAtPoint,
       'form mill': ({ context: { boards, turn }, event: { aplIndex } }) => {
-        console.log('guard: form mill', boards, turn, aplIndex);
+        // console.log('guard: form mill', boards, turn, aplIndex);
 
         // TODO determine if this forms a mill. If so, return true. Otherwise,
         // return false and then let the next event else happen
 
         const previousNumberOfMills = getNumberOfMills(boards[turn]);
-        console.log('previousNumberOfMills', previousNumberOfMills);
+        // console.log('previousNumberOfMills', previousNumberOfMills);
 
         const boardAfterPlace = aplPlacePiece(boards[turn], aplIndex);
-        console.log('boardAfterPlace', boardAfterPlace);
+        // console.log('boardAfterPlace', boardAfterPlace);
 
         const newNumberOfMills = getNumberOfMills(boardAfterPlace);
-        console.log('newNumberOfMills', newNumberOfMills);
+        // console.log('newNumberOfMills', newNumberOfMills);
 
         const isMillFormed = newNumberOfMills > previousNumberOfMills;
-        console.log('isMillFormed', isMillFormed);
+        // console.log('isMillFormed', isMillFormed);
 
         return isMillFormed;
       },
