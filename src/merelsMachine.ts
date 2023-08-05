@@ -4,16 +4,25 @@ import {
   // aplRemovePiece,
   // boardsToGridArray,
   getNumberOfMills,
-  // getNumberOfPieces,
+  getNumberOfPieces,
   // isIndexInMill,
   // openPointsAdjacentToPiece,
 } from './aplGameFunctions';
 
 type Turn = 'w' | 'b';
+type Actions = 'place' | 'lift' | 'remove' | 'end';
 export interface Boards {
   w: number[];
   b: number[];
 }
+interface WBNums {
+  w: number;
+  b: number;
+}
+// interface WBBooleans {
+//   w: boolean;
+//   b: boolean;
+// }
 
 const opponent = (x: Turn) => (x === 'w' ? 'b' : 'w');
 
@@ -21,8 +30,12 @@ export const merelsMachine = createMachine(
   {
     types: {} as {
       context: {
+        numberPiecesPlaced: WBNums;
         boards: Boards;
         turn: Turn;
+        // userAction is called 'action' in the original state
+        userAction: Actions;
+        userFeedback: string;
       };
     },
     context: {
@@ -30,7 +43,13 @@ export const merelsMachine = createMachine(
         w: Array.from(Array(27), (_) => 0),
         b: Array.from(Array(27), (_) => 0),
       },
+      numberPiecesPlaced: {
+        w: 0,
+        b: 0,
+      },
       turn: 'w',
+      userAction: 'place',
+      userFeedback: '',
     },
     id: 'merels 1',
     initial: 'Placement',
@@ -47,24 +66,19 @@ export const merelsMachine = createMachine(
                   reenter: true,
                 },
                 {
-                  target: 'Lifting',
                   guard: 'form mill',
                   actions: {
                     type: 'place',
                     params: {},
                   },
+                  target: 'Lifting',
                   reenter: false,
                 },
                 {
                   actions: [
-                    {
-                      type: 'place',
-                      params: {},
-                    },
-                    {
-                      type: 'swap',
-                      params: {},
-                    },
+                    { type: 'place' },
+                    { type: 'increment' },
+                    { type: 'swap' },
                   ],
                   reenter: true,
                 },
@@ -73,21 +87,24 @@ export const merelsMachine = createMachine(
           },
           Lifting: {
             on: {
-              'valid lift (occupied by opponent, not locked in mill)': [
+              'point.click': [
                 {
-                  target: '[STATE] swap players',
+                  guard:
+                    'invalid lift (empty space || occupied by self || occupied by opponent locked in mill)',
+                  reenter: true,
+                },
+                {
                   guard: 'all pieces have not yet been placed',
+                  actions: [{ type: 'lift' }, { type: 'swap' }],
+                  target: 'Placing',
                   reenter: false,
                 },
                 {
-                  target: '#merels 1.Moving.[STATE] swap players',
+                  actions: [{ type: 'lift' }, { type: 'swap' }],
+                  target: '#merels 1.Moving.Selecting',
                   reenter: false,
                 },
               ],
-              'invalid lift (empty space || occupied by self || occupied by opponent locked in mill)':
-                {
-                  reenter: true,
-                },
             },
           },
           '[STATE] swap players': {
@@ -183,6 +200,12 @@ export const merelsMachine = createMachine(
       test: ({ action }) => {
         // console.log(action.params);
       },
+      increment: ({ action }) => {
+        console.log('increment');
+      },
+      lift: ({ action }) => {
+        console.log('lift');
+      },
       place: assign({
         boards: ({ context: { boards, turn }, event: { aplIndex } }) => ({
           ...boards,
@@ -216,8 +239,36 @@ export const merelsMachine = createMachine(
 
         return isMillFormed;
       },
+      'invalid lift (empty space || occupied by self || occupied by opponent locked in mill)':
+        ({ event: { boards, pieceAtPoint, turn }, event: { aplIndex } }) => {
+          console.log(
+            'invalid lift (empty space || occupied by self || occupied by opponent locked in mill)',
+            boards,
+            pieceAtPoint,
+            turn,
+            aplIndex
+          );
+
+          // TODO
+          // const youAreHere = ..?
+          // const opponentIsHereAndLockedInMill = ..?
+          // return youAreHere && opponentIsHereAndLockedInMill
+
+          return true;
+        },
+      'all pieces have not yet been placed': ({
+        context: { boards, turn },
+      }) => {
+        console.log('all pieces have not yet been placed', boards, turn);
+
+        const numPiecesPlaced =
+          getNumberOfPieces(boards[turn]) +
+          getNumberOfPieces(boards[opponent(turn)]);
+        console.log('numPiecesPlaced', numPiecesPlaced);
+
+        return numPiecesPlaced < 18;
+      },
       'mill is formed': createMachine({}),
-      'all pieces have not yet been placed': createMachine({}),
       'opponent has more than 3 pieces remaining after lift': createMachine({}),
       'opponent has 3 pieces remaining after lift': createMachine({}),
     },
