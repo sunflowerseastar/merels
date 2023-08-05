@@ -5,9 +5,16 @@ import {
   // boardsToGridArray,
   getNumberOfMills,
   getNumberOfPieces,
-  // isIndexInMill,
+  isIndexInMill,
   // openPointsAdjacentToPiece,
 } from './aplGameFunctions';
+import {
+  aplIndexToMillIndex,
+  areNonMillOpponentPiecesAvailable,
+  // areTherePossibleAdjacentMoves,
+  // connectedPointsGraph,
+  // gridIndexToAplIndex,
+} from './utility';
 
 type Turn = 'w' | 'b';
 type Actions = 'place' | 'lift' | 'remove' | 'end';
@@ -61,6 +68,7 @@ export const merelsMachine = createMachine(
           Placing: {
             entry: assign({
               userAction: () => 'place',
+              userFeedback: () => '',
             }),
             on: {
               'point.click': [
@@ -88,8 +96,18 @@ export const merelsMachine = createMachine(
             on: {
               'point.click': [
                 {
+                  guard: 'invalid removal (empty point || occupied by self)',
+                  actions: assign({
+                    userFeedback: () => 'invalid',
+                  }),
+                  reenter: true,
+                },
+                {
                   guard:
-                    'invalid removal (empty space || occupied by self || occupied by opponent locked in mill)',
+                    'invalid removal (occupied by opponent locked in mill && others are available)',
+                  actions: assign({
+                    userFeedback: () => 'locked in mill',
+                  }),
                   reenter: true,
                 },
                 {
@@ -227,22 +245,29 @@ export const merelsMachine = createMachine(
         const isMillFormed = newNumberOfMills > previousNumberOfMills;
         return isMillFormed;
       },
-      'invalid removal (empty space || occupied by self || occupied by opponent locked in mill)':
-        ({ event: { boards, pieceAtPoint, turn }, event: { aplIndex } }) => {
-          console.log(
-            'invalid removal (empty space || occupied by self || occupied by opponent locked in mill)',
-            boards,
-            pieceAtPoint,
-            turn,
-            aplIndex
+      'invalid removal (empty point || occupied by self)': ({
+        context: { turn },
+        event: { pieceAtPoint },
+      }) => {
+        const playerClickedOnEmptyPoint = pieceAtPoint === '';
+        const playerClickedOnTheirOwnPiece = pieceAtPoint === turn;
+
+        return playerClickedOnEmptyPoint || playerClickedOnTheirOwnPiece;
+      },
+      'invalid removal (occupied by opponent locked in mill && others are available)':
+        ({ context: { boards, turn }, event: { aplIndex } }) => {
+          const opponentBoard = boards[opponent(turn)];
+          const playerClickedOnOpponentThatIsLockedInMill = !!isIndexInMill(
+            opponentBoard,
+            aplIndexToMillIndex[aplIndex]
           );
+          const areOtherRemovablePiecesAvailable =
+            areNonMillOpponentPiecesAvailable(opponentBoard);
 
-          // TODO
-          // const youAreHere = ..?
-          // const opponentIsHereAndLockedInMill = ..?
-          // return youAreHere && opponentIsHereAndLockedInMill
-
-          return true;
+          return (
+            playerClickedOnOpponentThatIsLockedInMill &&
+            areOtherRemovablePiecesAvailable
+          );
         },
       'all pieces have not yet been placed': ({
         context: { boards, turn },
