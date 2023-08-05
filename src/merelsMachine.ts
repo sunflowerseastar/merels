@@ -59,6 +59,9 @@ export const merelsMachine = createMachine(
         initial: 'Placing',
         states: {
           Placing: {
+            entry: assign({
+              userAction: () => 'place',
+            }),
             on: {
               'point.click': [
                 {
@@ -67,24 +70,21 @@ export const merelsMachine = createMachine(
                 },
                 {
                   guard: 'form mill',
-                  actions: {
-                    type: 'place',
-                    params: {},
-                  },
+                  actions: { type: 'place' },
                   target: 'Removing',
                   reenter: false,
                 },
                 {
-                  actions: [
-                    { type: 'place' },
-                    { type: 'swap' },
-                  ],
+                  actions: [{ type: 'place' }, { type: 'swap' }],
                   reenter: true,
                 },
               ],
             },
           },
           Removing: {
+            entry: assign({
+              userAction: () => 'remove',
+            }),
             on: {
               'point.click': [
                 {
@@ -161,7 +161,8 @@ export const merelsMachine = createMachine(
               'valid removal': [
                 {
                   target: '[STATE] swap players',
-                  guard: 'opponent has more than 3 pieces remaining after removal',
+                  guard:
+                    'opponent has more than 3 pieces remaining after removal',
                   reenter: false,
                 },
                 {
@@ -196,10 +197,14 @@ export const merelsMachine = createMachine(
   },
   {
     actions: {
-      test: ({ action }) => {
-        // console.log(action.params);
-      },
-      remove: ({ action }) => {
+      // test: ({ action }) => {
+      //   // console.log(action.params);
+      //   console.log('test yea')
+      // },
+      // test: assign({
+      //   userAction: () => 'remove',
+      // }),
+      remove: () => {
         console.log('remove');
       },
       place: assign({
@@ -252,7 +257,9 @@ export const merelsMachine = createMachine(
         return numPiecesPlaced < 18;
       },
       'mill is formed': createMachine({}),
-      'opponent has more than 3 pieces remaining after removal': createMachine({}),
+      'opponent has more than 3 pieces remaining after removal': createMachine(
+        {}
+      ),
       'opponent has 3 pieces remaining after removal': createMachine({}),
     },
     delays: {},
