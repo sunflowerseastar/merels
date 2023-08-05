@@ -1,7 +1,7 @@
 import { assign, createMachine } from 'xstate';
 import {
   aplPlacePiece,
-  // aplRemovePiece,
+  aplRemovePiece,
   // boardsToGridArray,
   getNumberOfMills,
   getNumberOfPieces,
@@ -68,12 +68,14 @@ export const merelsMachine = createMachine(
           Placing: {
             entry: assign({
               userAction: () => 'place',
-              userFeedback: () => '',
             }),
             on: {
               'point.click': [
                 {
                   guard: 'point is occupied',
+                  actions: assign({
+                    userFeedback: () => 'invalid',
+                  }),
                   reenter: true,
                 },
                 {
@@ -215,24 +217,22 @@ export const merelsMachine = createMachine(
   },
   {
     actions: {
-      // test: ({ action }) => {
-      //   // console.log(action.params);
-      //   console.log('test yea')
-      // },
-      // test: assign({
-      //   userAction: () => 'remove',
-      // }),
-      remove: () => {
-        console.log('remove');
-      },
+      remove: assign({
+        boards: ({ context: { boards, turn }, event: { aplIndex } }) => ({
+          ...boards,
+          [opponent(turn)]: aplRemovePiece(boards[opponent(turn)], aplIndex),
+        }),
+      }),
       place: assign({
         boards: ({ context: { boards, turn }, event: { aplIndex } }) => ({
           ...boards,
           [turn]: aplPlacePiece(boards[turn], aplIndex),
         }),
+        userFeedback: () => '',
       }),
       swap: assign({
         turn: ({ context: { turn } }) => opponent(turn),
+        userFeedback: () => '',
       }),
     },
     actors: {},
