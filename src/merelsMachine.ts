@@ -58,11 +58,11 @@ export const merelsMachine = createMachine(
       userAction: 'place',
       userFeedback: '',
     },
-    id: 'merels 1',
+    id: 'merels_statechart',
     initial: 'Placement',
     states: {
       Placement: {
-        description: 'This is a _state description_.',
+        description: 'Placing the initial 18 places, alternate turns, along with mill-forming removals',
         initial: 'Placing',
         states: {
           Placing: {
@@ -120,7 +120,7 @@ export const merelsMachine = createMachine(
                 },
                 {
                   actions: [{ type: 'remove' }, { type: 'swap' }],
-                  target: '#merels 1.Moving.Selecting',
+                  target: '#merels_statechart.Moving.Selecting',
                   reenter: false,
                 },
               ],
