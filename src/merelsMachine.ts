@@ -93,7 +93,11 @@ export const merelsMachine = createMachine(
                   reenter: false,
                 },
                 {
-                  guard: 'all pieces have not yet been placed',
+                  guard: {
+                    type: 'all pieces have not yet been placed',
+                    // the guard needs a +1 for the impending 'place' action
+                    params: { isUserPlacing: true },
+                  },
                   actions: [{ type: 'place' }, { type: 'swap' }],
                   target: 'Placing',
                   reenter: true,
@@ -301,16 +305,14 @@ export const merelsMachine = createMachine(
         },
       'all pieces have not yet been placed': ({
         context: { boards, turn },
-      }) => {
-        console.log('all pieces have not yet been placed', boards, turn);
-
-        const numPiecesPlaced =
+        guard: {
+          params: { isUserPlacing = false },
+        },
+      }) =>
+        (isUserPlacing ? 1 : 0) +
           getNumberOfPieces(boards[turn]) +
-          getNumberOfPieces(boards[opponent(turn)]);
-        console.log('numPiecesPlaced', numPiecesPlaced);
-
-        return numPiecesPlaced < 18;
-      },
+          getNumberOfPieces(boards[opponent(turn)]) <
+        18,
       'invalid lift (empty || occupied by opponent || (not flying && piece has no adjacent moves possible))':
         () => {},
       'mill is formed': createMachine({}),
