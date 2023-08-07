@@ -62,7 +62,8 @@ export const merelsMachine = createMachine(
     initial: 'Placement',
     states: {
       Placement: {
-        description: 'Placing the initial 18 places, alternate turns, along with mill-forming removals',
+        description:
+          'Placing the initial 18 places, alternate turns, along with mill-forming removals',
         initial: 'Placing',
         states: {
           Placing: {
@@ -120,7 +121,7 @@ export const merelsMachine = createMachine(
                 },
                 {
                   actions: [{ type: 'remove' }, { type: 'swap' }],
-                  target: '#merels_statechart.Moving.Selecting',
+                  target: '#merels_statechart.Moving.Lifting',
                   reenter: false,
                 },
               ],
@@ -138,29 +139,28 @@ export const merelsMachine = createMachine(
         description: 'This is a _state description_.',
         initial: '[STATE] swap players',
         states: {
-          '[STATE] swap players': {
-            always: {
-              target: 'Selecting',
-              reenter: false,
-            },
-          },
-          Selecting: {
+          Lifting: {
+            entry: assign({
+              userAction: () => 'lift',
+            }),
             on: {
-              'invalid select (empty || occupied by opponent || (not flying && piece has no adjacent moves possible))':
+              'point.click': [
                 {
-                  target: 'Selecting',
+                  guard:
+                    'invalid lift (empty || occupied by opponent || (not flying && piece has no adjacent moves possible))',
+                  reenter: true,
+                },
+                {
+                  target: 'Placing',
                   reenter: false,
                 },
-              'valid select': {
-                target: 'Placing',
-                reenter: false,
-              },
+              ],
             },
           },
           Placing: {
             on: {
               'invalid place (occupied || (not flying && not adjacent))': {
-                target: 'Selecting',
+                target: 'Lifting',
                 reenter: false,
               },
               'valid place': [
@@ -281,6 +281,8 @@ export const merelsMachine = createMachine(
 
         return numPiecesPlaced < 18;
       },
+      'invalid lift (empty || occupied by opponent || (not flying && piece has no adjacent moves possible))':
+        () => {},
       'mill is formed': createMachine({}),
       'opponent has more than 3 pieces remaining after removal': createMachine(
         {}
