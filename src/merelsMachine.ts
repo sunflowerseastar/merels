@@ -1,3 +1,4 @@
+import { meldDeepObj } from '@thi.ng/associative';
 import { assign, createMachine } from 'xstate';
 import {
   aplPlacePiece,
@@ -22,14 +23,31 @@ export interface Boards {
   w: number[];
   b: number[];
 }
-interface WBNums {
-  w: number;
-  b: number;
+interface WBBooleans {
+  w: boolean;
+  b: boolean;
 }
-// interface WBBooleans {
-//   w: boolean;
-//   b: boolean;
-// }
+type Context = {
+  boards: Boards;
+  isFlying: WBBooleans;
+  liftedAplIndex: number;
+  turn: Turn;
+  // userAction is called 'action' in the original state
+  userAction: Actions;
+  userFeedback: string;
+};
+
+const defaultContext: Context = {
+  boards: {
+    w: Array.from(Array(27), (_) => 0),
+    b: Array.from(Array(27), (_) => 0),
+  },
+  isFlying: { w: false, b: false },
+  liftedAplIndex: -1,
+  turn: 'w',
+  userAction: 'place',
+  userFeedback: '',
+};
 
 const opponent = (x: Turn) => (x === 'w' ? 'b' : 'w');
 
@@ -37,27 +55,16 @@ export const merelsMachine = createMachine(
   {
     types: {} as {
       context: {
-        numberPiecesPlaced: WBNums;
         boards: Boards;
+        isFlying: WBBooleans;
+        liftedAplIndex: number;
         turn: Turn;
         // userAction is called 'action' in the original state
         userAction: Actions;
         userFeedback: string;
       };
     },
-    context: {
-      boards: {
-        w: Array.from(Array(27), (_) => 0),
-        b: Array.from(Array(27), (_) => 0),
-      },
-      numberPiecesPlaced: {
-        w: 0,
-        b: 0,
-      },
-      turn: 'w',
-      userAction: 'place',
-      userFeedback: '',
-    },
+    context: ({ input }) => meldDeepObj(defaultContext, input),
     id: 'merels_statechart',
     initial: 'Placing',
     states: {

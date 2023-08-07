@@ -1,15 +1,5 @@
-import { $compile, $list, $text, $wrapText } from '@thi.ng/rdom';
-import {
-  // comp,
-  // cycle,
-  // push,
-  // filter,
-  // transform,
-  indexed,
-  // map,
-  // mapIndexed,
-  // transduce,
-} from '@thi.ng/transducers';
+import { $compile, $list } from '@thi.ng/rdom';
+import { indexed } from '@thi.ng/transducers';
 import { reactive } from '@thi.ng/rstream';
 import { defAtom, defCursor } from '@thi.ng/atom';
 // import { defAtom, defCursor, defView } from '@thi.ng/atom';
@@ -39,6 +29,7 @@ import {
 //   boardDbBeforePhase3,
 //   boardWithFourBlack,
 // } from './testBoards';
+import { boardJustPriorToMovingPhase } from './testContexts';
 
 type Turn = 'w' | 'b';
 export interface Boards {
@@ -95,7 +86,7 @@ const db = defAtom<State>(initialDb);
 // const db = defAtom(boardDbAtPhase2);
 // const db = defAtom(boardWithFourBlack);
 
-const blockInteractions = defAtom<boolean>(false);
+// const blockInteractions = defAtom<boolean>(false);
 const hasInitiallyLoaded = defAtom<boolean>(false);
 const action = defCursor(db, ['action']);
 const boardsCursor = defCursor(db, ['boards']);
@@ -293,16 +284,15 @@ const onClickPoint = (
   }
 };
 
-const actor = interpret(merelsMachine).start();
+const actor = interpret(merelsMachine, {
+  input: boardJustPriorToMovingPhase,
+}).start();
 
 const actorBoards = actor.getSnapshot().context.boards;
 const boards = reactive(actorBoards);
 const actorTurn = actor.getSnapshot().context.turn;
 const turn = reactive(actorTurn);
 
-const numberPiecesPlaced = reactive(
-  actor.getSnapshot().context.numberPiecesPlaced
-);
 const userAction = reactive(actor.getSnapshot().context.userAction);
 const userFeedback = reactive(actor.getSnapshot().context.userFeedback);
 
@@ -311,7 +301,6 @@ actor.subscribe((snapshot) => {
   turn.next(snapshot.context.turn);
   userAction.next(snapshot.context.userAction);
   userFeedback.next(snapshot.context.userFeedback);
-  numberPiecesPlaced.next(snapshot.context.numberPiecesPlaced);
 });
 
 const boardView = $list(
