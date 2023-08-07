@@ -1,4 +1,4 @@
-import { $compile, $list } from '@thi.ng/rdom';
+import { $compile, $klist } from '@thi.ng/rdom';
 import { indexed } from '@thi.ng/transducers';
 import { reactive } from '@thi.ng/rstream';
 import { defAtom, defCursor } from '@thi.ng/atom';
@@ -285,7 +285,7 @@ const onClickPoint = (
 };
 
 const actor = interpret(merelsMachine, {
-  input: boardJustPriorToMovingPhase,
+  // input: boardJustPriorToMovingPhase,
 }).start();
 
 const actorBoards = actor.getSnapshot().context.boards;
@@ -303,7 +303,7 @@ actor.subscribe((snapshot) => {
   userFeedback.next(snapshot.context.userFeedback);
 });
 
-const boardView = $list(
+const boardView = $klist(
   boards.map((board) => [...indexed(0, boardsToGridArray(board))]),
   'div.grid',
   {},
@@ -319,20 +319,26 @@ const boardView = $list(
           {
             'data-lines': `line-${aplIndex}`,
             onclick: () => {
-              console.log(
-                'i, x, aplIndex, pieceAtPoint',
-                i,
-                x,
-                aplIndex,
-                pieceAtPoint
-              );
+              // console.log(
+              //   'i, x, aplIndex, pieceAtPoint',
+              //   i,
+              //   x,
+              //   aplIndex,
+              //   pieceAtPoint
+              // );
               actor.send({ type: 'point.click', aplIndex, pieceAtPoint });
             },
           },
-          ['span.piece', { class: pieceAtPoint || 'empty' }, ''],
+          [
+            'span',
+            {
+              class: `piece ${pieceAtPoint ? pieceAtPoint : 'empty'}`,
+            },
+          ],
         ]
       : ['span', {}, ''];
-  }
+  },
+  ([i, x]) => `${i}${x}`
 );
 
 $compile([
@@ -340,9 +346,7 @@ $compile([
   {},
   [
     'div.app-inner',
-    {
-      class: 'test',
-    },
+    {},
     ['div.board', {}, boardView],
     [
       'div.controls',
