@@ -23,6 +23,10 @@ export interface Boards {
   w: number[];
   b: number[];
 }
+interface WBNums {
+  w: number;
+  b: number;
+}
 interface WBBooleans {
   w: boolean;
   b: boolean;
@@ -31,8 +35,9 @@ type Context = {
   boards: Boards;
   isFlying: WBBooleans;
   liftedAplIndex: number;
+  numberOfPiecesPlaced: WBNums;
+  possiblePlaces: [];
   turn: Turn;
-  // userAction is called 'action' in the original state
   userAction: Actions;
   userFeedback: string;
 };
@@ -44,6 +49,10 @@ const defaultContext: Context = {
   },
   isFlying: { w: false, b: false },
   liftedAplIndex: -1,
+  numberOfPiecesPlaced: {
+    w: 0,
+    b: 0,
+  },
   possiblePlaces: [],
   turn: 'w',
   userAction: 'place',
@@ -54,18 +63,7 @@ const opponent = (x: Turn) => (x === 'w' ? 'b' : 'w');
 
 export const merelsMachine = createMachine(
   {
-    types: {} as {
-      context: {
-        boards: Boards;
-        isFlying: WBBooleans;
-        liftedAplIndex: number;
-        possiblePlaces: number[];
-        turn: Turn;
-        // userAction is called 'action' in the original state
-        userAction: Actions;
-        userFeedback: string;
-      };
-    },
+    types: {} as { context: Context },
     context: ({ input }) => meldDeepObj(defaultContext, input),
     id: 'merels_statechart',
     initial: 'Placing',
@@ -77,7 +75,7 @@ export const merelsMachine = createMachine(
         states: {
           Placing: {
             entry: assign({
-              userAction: () => 'place',
+              userAction: 'place',
             }),
             on: {
               'point.click': [
@@ -89,7 +87,7 @@ export const merelsMachine = createMachine(
                   reenter: true,
                 },
                 {
-                  guard: 'form mill',
+                  guard: 'mill is formed',
                   actions: { type: 'place' },
                   target: 'Removing',
                   reenter: false,
@@ -97,8 +95,7 @@ export const merelsMachine = createMachine(
                 {
                   guard: {
                     type: 'all pieces have not yet been placed',
-                    // the guard needs a +1 for the impending 'place' action
-                    params: { isUserPlacing: true },
+                    params: { isPlacing: true },
                   },
                   actions: [{ type: 'place' }, { type: 'swap' }],
                   target: 'Placing',
@@ -114,7 +111,7 @@ export const merelsMachine = createMachine(
           },
           Removing: {
             entry: assign({
-              userAction: () => 'remove',
+              userAction: 'remove',
             }),
             on: {
               'point.click': [
@@ -154,8 +151,9 @@ export const merelsMachine = createMachine(
         initial: 'Lifting',
         states: {
           Lifting: {
+            // TODO if the current player has no legal moves, they lose (do I put a guard with an action for the Lifting state?)
             entry: assign({
-              userAction: () => 'lift',
+              userAction: 'lift',
             }),
             on: {
               'point.click': [
@@ -169,15 +167,15 @@ export const merelsMachine = createMachine(
                 },
                 {
                   actions: ['lift'],
-                  target: 'Placing',
+                  target: 'Moving',
                   reenter: false,
                 },
               ],
             },
           },
-          Placing: {
+          Moving: {
             entry: assign({
-              userAction: () => 'place',
+              userAction: 'place',
             }),
             on: {
               'point.click': [
@@ -187,11 +185,9 @@ export const merelsMachine = createMachine(
                   guard:
                     'invalid place (occupied || (not flying && not adjacent))',
                   target: 'Lifting',
-                  // actions: ['unlift'],
                   reenter: false,
                 },
                 {
-                  // TODO think about players locked in a mill..?
                   guard: 'no mill is formed',
                   actions: [{ type: 'move' }, { type: 'swap' }],
                   target: 'Lifting',
@@ -207,13 +203,25 @@ export const merelsMachine = createMachine(
             },
           },
           Removing: {
+            entry: assign({
+              userAction: 'remove',
+            }),
             on: {
               'point.click': [
                 {
-                  target: 'Removing',
+                  guard: 'invalid removal (empty point || occupied by self)',
+                  actions: assign({
+                    userFeedback: () => 'invalid',
+                  }),
+                  reenter: true,
+                },
+                {
                   guard:
-                    'invalid removal (empty space || occupied by self || occupied by opponent locked in mill)',
-                  reenter: false,
+                    'invalid removal (occupied by opponent locked in mill && others are available)',
+                  actions: assign({
+                    userFeedback: () => 'locked in mill',
+                  }),
+                  reenter: true,
                 },
                 {
                   guard:
@@ -241,6 +249,9 @@ export const merelsMachine = createMachine(
           },
           'Active player wins, Opponent loses': {
             type: 'final',
+            entry: assign({
+              userAction: 'end',
+            }),
           },
         },
       },
@@ -259,58 +270,56 @@ export const merelsMachine = createMachine(
           ...boards,
           [turn]: aplPlacePiece(boards[turn], aplIndex),
         }),
+        numberOfPiecesPlaced: ({ context: { numberOfPiecesPlaced, turn } }) => {
+          console.log('numberOfPiecesPlaced', numberOfPiecesPlaced);
+          return {
+            ...numberOfPiecesPlaced,
+            [turn]: numberOfPiecesPlaced[turn] + 1,
+          };
+        },
         userFeedback: () => '',
       }),
       move: assign({
         boards: ({
           context: { boards, liftedAplIndex, turn },
           event: { aplIndex },
-        }) => {
-          console.log('move');
-          console.log(
-            'aplRemovePiece(boards[turn], liftedAplIndex)',
-            aplRemovePiece(boards[turn], liftedAplIndex)
-          );
-          return {
-            ...boards,
-            [turn]: aplPlacePiece(
-              aplRemovePiece(boards[turn], liftedAplIndex),
-              aplIndex
-            ),
-          };
-        },
+        }) => ({
+          ...boards,
+          [turn]: aplPlacePiece(
+            aplRemovePiece(boards[turn], liftedAplIndex),
+            aplIndex
+          ),
+        }),
         userFeedback: () => '',
       }),
       lift: assign({
         liftedAplIndex: ({ event: { aplIndex } }) => aplIndex,
-        possiblePlaces: ({
-          context: { boards, turn },
-          event: { aplIndex },
-        }) => {
-          // TODO is this wrong somehow..?
-          const poss = openPointsAdjacentToPiece(
+        possiblePlaces: ({ context: { boards, turn }, event: { aplIndex } }) =>
+          openPointsAdjacentToPiece(
             boards[turn],
             boards[opponent(turn)],
             connectedPointsGraph[aplIndex]
-          );
-          console.log('poss', poss);
-          return poss;
-        },
+          ),
         userFeedback: () => '',
       }),
-      unlift: ({ context, event }) => {
-        // TODO figure out what to do here - is this on the right track or no?
-        console.log('unlift', context, event);
-      },
       swap: assign({
         turn: ({ context: { turn } }) => opponent(turn),
         userFeedback: () => '',
+      }),
+      'set opponent to flying': assign({
+        isFlying: ({ context: { isFlying, turn } }) => ({
+          ...isFlying,
+          [opponent(turn)]: true,
+        }),
       }),
     },
     actors: {},
     guards: {
       'point is occupied': ({ event: { pieceAtPoint } }) => !!pieceAtPoint,
-      'form mill': ({ context: { boards, turn }, event: { aplIndex } }) => {
+      'mill is formed': ({
+        context: { boards, turn },
+        event: { aplIndex },
+      }) => {
         const previousNumberOfMills = getNumberOfMills(boards[turn]);
         const boardAfterPlace = aplPlacePiece(boards[turn], aplIndex);
         const newNumberOfMills = getNumberOfMills(boardAfterPlace);
@@ -342,80 +351,69 @@ export const merelsMachine = createMachine(
           );
         },
       'all pieces have not yet been placed': ({
-        context: { boards, turn },
+        context: { numberOfPiecesPlaced, turn },
         guard: {
-          params: { isUserPlacing = false },
+          params: { isPlacing },
         },
-      }) =>
-        (isUserPlacing ? 1 : 0) +
-          getNumberOfPieces(boards[turn]) +
-          getNumberOfPieces(boards[opponent(turn)]) <
-        18,
+      }) => {
+        console.log('all pieces have not yet been placed');
+        console.log('numberOfPiecesPlaced[turn]', numberOfPiecesPlaced[turn]);
+        console.log(
+          'numberOfPiecesPlaced[opponent(turn)]',
+          numberOfPiecesPlaced[opponent(turn)]
+        );
+        return (
+          (isPlacing ? 1 : 0) +
+            numberOfPiecesPlaced[turn] +
+            numberOfPiecesPlaced[opponent(turn)] <
+          18
+        );
+      },
       'invalid lift (empty || occupied by opponent || (not flying && piece has no adjacent moves possible))':
         ({ context: { boards, turn }, event: { aplIndex, pieceAtPoint } }) => {
-          // equivalent to empty || occupied by opponent
-          const didNotClickOnSelf = pieceAtPoint !== turn;
-
-          // TODO put 'isAdjacent' (if !isFlying) logic here? Or let the user pick a "bad" one and then cancel?
+          const isEmptyOrOccupiedByOpponent = pieceAtPoint !== turn;
           const areAdjacentMovesAvailable = !!openPointsAdjacentToPiece(
             boards[turn],
             boards[opponent(turn)],
             connectedPointsGraph[aplIndex]
           ).length;
           const isFlying = getNumberOfPieces(boards[turn]) === 3;
-          console.log('areAdjacentMovesAvailable', areAdjacentMovesAvailable);
-          console.log('isFlying', isFlying);
 
-          const x =
-            didNotClickOnSelf || (!areAdjacentMovesAvailable && !isFlying);
-          console.log('x', x);
-
-          // verify this is right and clean it up
-          return x;
-
-          // const openPoints = openPointsAdjacentToPiece(
-          //   boards[currentTurn],
-          //   boards[opponent(currentTurn)],
-          //   connectedPointsGraph[aplIndex]
-          // );
-          //
-          // if (isFlying.deref()[currentTurn]) {
-          //   // flying
-          //   action.reset('place');
-          //   liftedAplIndex.reset(aplIndex);
-          // } else if (!!openPoints.length) {
-          //   action.reset('place');
-          //   possiblePlaces.reset(openPoints);
-          //   liftedAplIndex.reset(aplIndex);
-          // } else {
-          //   feedback.reset('immovable');
-          // }
+          return (
+            isEmptyOrOccupiedByOpponent ||
+            (!areAdjacentMovesAvailable && !isFlying)
+          );
         },
       'invalid place (occupied || (not flying && not adjacent))': ({
         context: { boards, possiblePlaces, turn },
         event: { aplIndex, pieceAtPoint },
       }) => {
         const isOccupied = pieceAtPoint !== '';
-        console.log('isOccupied', isOccupied);
-
         const isFlying = getNumberOfPieces(boards[turn]) === 3;
-        console.log('isFlying', isFlying);
-
-        console.log('possiblePlaces', possiblePlaces);
         const isAdjacent = possiblePlaces.includes(aplIndex);
-        console.log('isAdjacent', isAdjacent);
 
-        const z = isOccupied || (!isAdjacent && !isFlying);
-        console.log('z', z);
-
-        // verfy this is right and clean it up (seems like this isn't right..?)
-        return z;
+        return isOccupied || (!isAdjacent && !isFlying);
       },
-      'mill is formed': createMachine({}),
-      'opponent has more than 3 pieces remaining after removal': createMachine(
-        {}
-      ),
-      'opponent has 3 pieces remaining after removal': createMachine({}),
+      'no mill is formed': ({
+        context: { boards, liftedAplIndex, turn },
+        event: { aplIndex },
+      }) => {
+        console.log('no mill is formed');
+        const boardAfterRemoval = aplRemovePiece(boards[turn], liftedAplIndex);
+        const previousNumberOfMills = getNumberOfMills(boardAfterRemoval);
+
+        const boardAfterMove = aplPlacePiece(boardAfterRemoval, aplIndex);
+        const newNumberOfMills = getNumberOfMills(boardAfterMove);
+
+        const noMillIsFormed = newNumberOfMills === previousNumberOfMills;
+        return noMillIsFormed;
+      },
+      'opponent has more than 3 pieces remaining after removal': ({
+        context: { boards, turn },
+      }) => getNumberOfPieces(boards[opponent(turn)]) - 1 > 3,
+      'opponent has 3 pieces remaining after removal': ({
+        context: { boards, turn },
+      }) => getNumberOfPieces(boards[opponent(turn)]) - 1 === 3,
     },
     delays: {},
   }
