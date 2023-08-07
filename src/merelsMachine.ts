@@ -86,8 +86,15 @@ export const merelsMachine = createMachine(
                   reenter: false,
                 },
                 {
+                  guard: 'all pieces have not yet been placed',
                   actions: [{ type: 'place' }, { type: 'swap' }],
+                  target: 'Placing',
                   reenter: true,
+                },
+                {
+                  target: '#merels_statechart.Moving.Lifting',
+                  actions: [{ type: 'place' }, { type: 'swap' }],
+                  reenter: false,
                 },
               ],
             },
