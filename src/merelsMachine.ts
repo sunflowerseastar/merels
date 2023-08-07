@@ -7,13 +7,13 @@ import {
   getNumberOfMills,
   getNumberOfPieces,
   isIndexInMill,
-  // openPointsAdjacentToPiece,
+  openPointsAdjacentToPiece,
 } from './aplGameFunctions';
 import {
   aplIndexToMillIndex,
   areNonMillOpponentPiecesAvailable,
   // areTherePossibleAdjacentMoves,
-  // connectedPointsGraph,
+  connectedPointsGraph,
   // gridIndexToAplIndex,
 } from './utility';
 
@@ -44,6 +44,7 @@ const defaultContext: Context = {
   },
   isFlying: { w: false, b: false },
   liftedAplIndex: -1,
+  possiblePlaces: [],
   turn: 'w',
   userAction: 'place',
   userFeedback: '',
@@ -58,6 +59,7 @@ export const merelsMachine = createMachine(
         boards: Boards;
         isFlying: WBBooleans;
         liftedAplIndex: number;
+        possiblePlaces: number[];
         turn: Turn;
         // userAction is called 'action' in the original state
         userAction: Actions;
@@ -166,14 +168,17 @@ export const merelsMachine = createMachine(
                   reenter: true,
                 },
                 {
-                  target: 'Placing',
                   actions: ['lift'],
+                  target: 'Placing',
                   reenter: false,
                 },
               ],
             },
           },
           Placing: {
+            entry: assign({
+              userAction: () => 'place',
+            }),
             on: {
               'point.click': [
                 {
@@ -182,19 +187,19 @@ export const merelsMachine = createMachine(
                   guard:
                     'invalid place (occupied || (not flying && not adjacent))',
                   target: 'Lifting',
-                  actions: ['unlift'],
+                  // actions: ['unlift'],
                   reenter: false,
                 },
                 {
                   // TODO think about players locked in a mill..?
                   guard: 'no mill is formed',
-                  actions: [{ type: 'place' }, { type: 'swap' }],
+                  actions: [{ type: 'move' }, { type: 'swap' }],
                   target: 'Lifting',
                   reenter: false,
                 },
                 {
                   // [implicit] mill is formed
-                  actions: [{ type: 'place' }],
+                  actions: [{ type: 'move' }],
                   target: 'Removing',
                   reenter: false,
                 },
@@ -256,10 +261,43 @@ export const merelsMachine = createMachine(
         }),
         userFeedback: () => '',
       }),
-      lift: ({ context, event }) => {
-        // TODO lift logic, state-wise
-        console.log('lift', context, event);
-      },
+      move: assign({
+        boards: ({
+          context: { boards, liftedAplIndex, turn },
+          event: { aplIndex },
+        }) => {
+          console.log('move');
+          console.log(
+            'aplRemovePiece(boards[turn], liftedAplIndex)',
+            aplRemovePiece(boards[turn], liftedAplIndex)
+          );
+          return {
+            ...boards,
+            [turn]: aplPlacePiece(
+              aplRemovePiece(boards[turn], liftedAplIndex),
+              aplIndex
+            ),
+          };
+        },
+        userFeedback: () => '',
+      }),
+      lift: assign({
+        liftedAplIndex: ({ event: { aplIndex } }) => aplIndex,
+        possiblePlaces: ({
+          context: { boards, turn },
+          event: { aplIndex },
+        }) => {
+          // TODO is this wrong somehow..?
+          const poss = openPointsAdjacentToPiece(
+            boards[turn],
+            boards[opponent(turn)],
+            connectedPointsGraph[aplIndex]
+          );
+          console.log('poss', poss);
+          return poss;
+        },
+        userFeedback: () => '',
+      }),
       unlift: ({ context, event }) => {
         // TODO figure out what to do here - is this on the right track or no?
         console.log('unlift', context, event);
@@ -314,7 +352,65 @@ export const merelsMachine = createMachine(
           getNumberOfPieces(boards[opponent(turn)]) <
         18,
       'invalid lift (empty || occupied by opponent || (not flying && piece has no adjacent moves possible))':
-        () => {},
+        ({ context: { boards, turn }, event: { aplIndex, pieceAtPoint } }) => {
+          // equivalent to empty || occupied by opponent
+          const didNotClickOnSelf = pieceAtPoint !== turn;
+
+          // TODO put 'isAdjacent' (if !isFlying) logic here? Or let the user pick a "bad" one and then cancel?
+          const areAdjacentMovesAvailable = !!openPointsAdjacentToPiece(
+            boards[turn],
+            boards[opponent(turn)],
+            connectedPointsGraph[aplIndex]
+          ).length;
+          const isFlying = getNumberOfPieces(boards[turn]) === 3;
+          console.log('areAdjacentMovesAvailable', areAdjacentMovesAvailable);
+          console.log('isFlying', isFlying);
+
+          const x =
+            didNotClickOnSelf || (!areAdjacentMovesAvailable && !isFlying);
+          console.log('x', x);
+
+          // verify this is right and clean it up
+          return x;
+
+          // const openPoints = openPointsAdjacentToPiece(
+          //   boards[currentTurn],
+          //   boards[opponent(currentTurn)],
+          //   connectedPointsGraph[aplIndex]
+          // );
+          //
+          // if (isFlying.deref()[currentTurn]) {
+          //   // flying
+          //   action.reset('place');
+          //   liftedAplIndex.reset(aplIndex);
+          // } else if (!!openPoints.length) {
+          //   action.reset('place');
+          //   possiblePlaces.reset(openPoints);
+          //   liftedAplIndex.reset(aplIndex);
+          // } else {
+          //   feedback.reset('immovable');
+          // }
+        },
+      'invalid place (occupied || (not flying && not adjacent))': ({
+        context: { boards, possiblePlaces, turn },
+        event: { aplIndex, pieceAtPoint },
+      }) => {
+        const isOccupied = pieceAtPoint !== '';
+        console.log('isOccupied', isOccupied);
+
+        const isFlying = getNumberOfPieces(boards[turn]) === 3;
+        console.log('isFlying', isFlying);
+
+        console.log('possiblePlaces', possiblePlaces);
+        const isAdjacent = possiblePlaces.includes(aplIndex);
+        console.log('isAdjacent', isAdjacent);
+
+        const z = isOccupied || (!isAdjacent && !isFlying);
+        console.log('z', z);
+
+        // verfy this is right and clean it up (seems like this isn't right..?)
+        return z;
+      },
       'mill is formed': createMachine({}),
       'opponent has more than 3 pieces remaining after removal': createMachine(
         {}
