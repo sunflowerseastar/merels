@@ -59,9 +59,9 @@ export const merelsMachine = createMachine(
       userFeedback: '',
     },
     id: 'merels_statechart',
-    initial: 'Placement',
+    initial: 'Placing',
     states: {
-      Placement: {
+      Placing: {
         description:
           'Placing the initial 18 places, alternate turns, along with mill-forming removals',
         initial: 'Placing',
@@ -134,17 +134,11 @@ export const merelsMachine = createMachine(
               ],
             },
           },
-          '[STATE] swap players': {
-            always: {
-              target: 'Placing',
-              reenter: false,
-            },
-          },
         },
       },
       Moving: {
         description: 'This is a _state description_.',
-        initial: '[STATE] swap players',
+        initial: 'Lifting',
         states: {
           Lifting: {
             entry: assign({
@@ -155,10 +149,14 @@ export const merelsMachine = createMachine(
                 {
                   guard:
                     'invalid lift (empty || occupied by opponent || (not flying && piece has no adjacent moves possible))',
+                  actions: assign({
+                    userFeedback: () => 'invalid',
+                  }),
                   reenter: true,
                 },
                 {
                   target: 'Placing',
+                  actions: ['lift'],
                   reenter: false,
                 },
               ],
@@ -166,18 +164,27 @@ export const merelsMachine = createMachine(
           },
           Placing: {
             on: {
-              'invalid place (occupied || (not flying && not adjacent))': {
-                target: 'Lifting',
-                reenter: false,
-              },
-              'valid place': [
+              'point.click': [
                 {
-                  target: 'Removing',
-                  guard: 'mill is formed',
+                  // TODO what about if there are no adjacent moves available? Will game be over already or will this state be stuck?
+                  // ...correction... does it make more sense for a piece in this scenario to not have been lift-able in the first place..?
+                  guard:
+                    'invalid place (occupied || (not flying && not adjacent))',
+                  target: 'Lifting',
+                  actions: ['unlift'],
                   reenter: false,
                 },
                 {
-                  target: '[STATE] swap players',
+                  // TODO think about players locked in a mill..?
+                  guard: 'no mill is formed',
+                  actions: [{ type: 'place' }, { type: 'swap' }],
+                  target: 'Lifting',
+                  reenter: false,
+                },
+                {
+                  // [implicit] mill is formed
+                  actions: [{ type: 'place' }],
+                  target: 'Removing',
                   reenter: false,
                 },
               ],
@@ -185,16 +192,28 @@ export const merelsMachine = createMachine(
           },
           Removing: {
             on: {
-              'valid removal': [
+              'point.click': [
                 {
-                  target: '[STATE] swap players',
+                  target: 'Removing',
                   guard:
-                    'opponent has more than 3 pieces remaining after removal',
+                    'invalid removal (empty space || occupied by self || occupied by opponent locked in mill)',
                   reenter: false,
                 },
                 {
-                  target: '[STATE] opponent is now flying',
+                  guard:
+                    'opponent has more than 3 pieces remaining after removal',
+                  actions: [{ type: 'remove' }, { type: 'swap' }],
+                  target: 'Lifting',
+                  reenter: false,
+                },
+                {
+                  target: 'Lifting',
                   guard: 'opponent has 3 pieces remaining after removal',
+                  actions: [
+                    { type: 'remove' },
+                    { type: 'set opponent to flying' },
+                    { type: 'swap' },
+                  ],
                   reenter: false,
                 },
                 {
@@ -202,17 +221,6 @@ export const merelsMachine = createMachine(
                   reenter: false,
                 },
               ],
-              'invalid removal (empty space || occupied by self || occupied by opponent locked in mill)':
-                {
-                  target: 'Removing',
-                  reenter: false,
-                },
-            },
-          },
-          '[STATE] opponent is now flying': {
-            always: {
-              target: '[STATE] swap players',
-              reenter: false,
             },
           },
           'Active player wins, Opponent loses': {
@@ -237,6 +245,14 @@ export const merelsMachine = createMachine(
         }),
         userFeedback: () => '',
       }),
+      lift: ({ context, event }) => {
+        // TODO lift logic, state-wise
+        console.log('lift', context, event);
+      },
+      unlift: ({ context, event }) => {
+        // TODO figure out what to do here - is this on the right track or no?
+        console.log('unlift', context, event);
+      },
       swap: assign({
         turn: ({ context: { turn } }) => opponent(turn),
         userFeedback: () => '',
