@@ -62,7 +62,8 @@ const defaultContext: Context = {
 const opponent = (x: Turn) => (x === 'w' ? 'b' : 'w');
 
 interface PointClickEvent extends EventObject {
-  type: 'point.click';
+  // TODO figure out this
+  type: 'point.click' | 'restart.click';
   aplIndex: number;
   pieceAtPoint: Turn | '';
 }
@@ -261,6 +262,7 @@ export const merelsMachine = createMachine<Context, PointClickEvent>(
                 },
                 {
                   target: 'Active player wins, Opponent loses',
+                  actions: [{ type: 'remove' }],
                   reenter: false,
                 },
               ],
@@ -270,7 +272,14 @@ export const merelsMachine = createMachine<Context, PointClickEvent>(
             type: 'final',
             entry: assign({
               userAction: 'end',
+              userFeedback: ({ context: { turn } }) =>
+                `${turn === 'w' ? 'white' : 'black'} wins`,
             }),
+            on: {
+              'restart.click': {
+                target: '#merels_statechart',
+              },
+            },
           },
         },
       },

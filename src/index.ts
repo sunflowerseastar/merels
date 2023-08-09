@@ -349,8 +349,10 @@ $compile([
     {},
     ['div.board', {}, boardView],
     [
-      'div.controls',
-      {},
+      'div',
+      {
+        class: userAction.map((userAction) => `controls ${userAction}`),
+      },
       [
         'div.turn-pieces-container',
         {},
@@ -369,10 +371,14 @@ $compile([
         'p.reset',
         {
           onclick: () => {
-            console.log('onclick reset');
+            // TODO figure out this
+            // TODO then figure out how to reset the state on restart
+            actor.send({
+              type: 'restart.click',
+            });
           },
         },
-        'reset stub',
+        'restart',
       ],
       ['p.action', {}, userAction],
     ],

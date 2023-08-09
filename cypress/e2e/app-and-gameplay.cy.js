@@ -317,13 +317,16 @@ describe('Two users (at same computer) play a game', () => {
       .should('contain', 'flying');
 
     // white moves, forms mill, takes black, wins
-    // cy.get('.point').eq(17).click();
-    // cy.get('.point').eq(1).click();
-    // cy.get('.point').eq(11).click().get('.controls');
-    // .should('contain', 'restart')
-    // .get('.feedback')
-    // .children()
-    // .should('contain', 'white wins');
+    cy.get('.point').eq(17).click();
+    cy.get('.point').eq(1).click();
+    cy.get('.point')
+      .eq(11)
+      .click()
+      .get('.controls')
+      .should('contain', 'restart')
+      .get('.feedback')
+      .children()
+      .should('contain', 'white wins');
     // TODO remove the last one
     // TODO add feedback 'white wins'
 
