@@ -68,7 +68,6 @@ interface PointClickEvent extends EventObject {
 }
 
 export const merelsMachine = createMachine<Context, PointClickEvent>(
-  // export const merelsMachine = createMachine(
   {
     types: {} as { context: Context },
     context: ({ input }) => meldDeepObj(defaultContext, input),
@@ -165,10 +164,17 @@ export const merelsMachine = createMachine<Context, PointClickEvent>(
             on: {
               'point.click': [
                 {
-                  guard:
-                    'invalid lift (empty || occupied by opponent || (not flying && piece has no adjacent moves possible))',
+                  guard: 'invalid lift (empty || occupied by opponent)',
                   actions: assign({
                     userFeedback: () => 'invalid',
+                  }),
+                  reenter: true,
+                },
+                {
+                  guard:
+                    'invalid lift (not flying && piece has no adjacent moves possible)',
+                  actions: assign({
+                    userFeedback: () => 'immovable',
                   }),
                   reenter: true,
                 },
@@ -283,13 +289,12 @@ export const merelsMachine = createMachine<Context, PointClickEvent>(
           ...boards,
           [turn]: aplPlacePiece(boards[turn], aplIndex),
         }),
-        numberOfPiecesPlaced: ({ context: { numberOfPiecesPlaced, turn } }) => {
-          console.log('numberOfPiecesPlaced', numberOfPiecesPlaced);
-          return {
-            ...numberOfPiecesPlaced,
-            [turn]: numberOfPiecesPlaced[turn] + 1,
-          };
-        },
+        numberOfPiecesPlaced: ({
+          context: { numberOfPiecesPlaced, turn },
+        }) => ({
+          ...numberOfPiecesPlaced,
+          [turn]: numberOfPiecesPlaced[turn] + 1,
+        }),
         userFeedback: () => '',
       }),
       move: assign({
@@ -342,12 +347,7 @@ export const merelsMachine = createMachine<Context, PointClickEvent>(
       'invalid removal (empty point || occupied by self)': ({
         context: { turn },
         event: { pieceAtPoint },
-      }) => {
-        const playerClickedOnEmptyPoint = pieceAtPoint === '';
-        const playerClickedOnTheirOwnPiece = pieceAtPoint === turn;
-
-        return playerClickedOnEmptyPoint || playerClickedOnTheirOwnPiece;
-      },
+      }) => pieceAtPoint !== opponent(turn),
       'invalid removal (occupied by opponent locked in mill && others are available)':
         ({ context: { boards, turn }, event: { aplIndex } }) => {
           const opponentBoard = boards[opponent(turn)];
@@ -368,35 +368,25 @@ export const merelsMachine = createMachine<Context, PointClickEvent>(
         guard: {
           params: { isPlacing },
         },
-      }) => {
-        console.log('all pieces have not yet been placed');
-        console.log('numberOfPiecesPlaced[turn]', numberOfPiecesPlaced[turn]);
-        console.log(
-          'numberOfPiecesPlaced[opponent(turn)]',
-          numberOfPiecesPlaced[opponent(turn)]
-        );
-        return (
-          (isPlacing ? 1 : 0) +
-            numberOfPiecesPlaced[turn] +
-            numberOfPiecesPlaced[opponent(turn)] <
-          18
-        );
-      },
-      'invalid lift (empty || occupied by opponent || (not flying && piece has no adjacent moves possible))':
-        ({ context: { boards, turn }, event: { aplIndex, pieceAtPoint } }) => {
-          const isEmptyOrOccupiedByOpponent = pieceAtPoint !== turn;
-          const areAdjacentMovesAvailable = !!openPointsAdjacentToPiece(
-            boards[turn],
-            boards[opponent(turn)],
-            connectedPointsGraph[aplIndex]
-          ).length;
-          const isFlying = getNumberOfPieces(boards[turn]) === 3;
-
-          return (
-            isEmptyOrOccupiedByOpponent ||
-            (!areAdjacentMovesAvailable && !isFlying)
-          );
-        },
+      }) =>
+        (isPlacing ? 1 : 0) +
+          numberOfPiecesPlaced[turn] +
+          numberOfPiecesPlaced[opponent(turn)] <
+        18,
+      'invalid lift (empty || occupied by opponent)': ({
+        context: { turn },
+        event: { pieceAtPoint },
+      }) => pieceAtPoint !== turn,
+      'invalid lift (not flying && piece has no adjacent moves possible)': ({
+        context: { boards, turn },
+        event: { aplIndex },
+      }) =>
+        getNumberOfPieces(boards[turn]) > 3 &&
+        !openPointsAdjacentToPiece(
+          boards[turn],
+          boards[opponent(turn)],
+          connectedPointsGraph[aplIndex]
+        ).length,
       'invalid move (occupied || (not flying && not adjacent))': ({
         context: { boards, possiblePlaces, turn },
         event: { aplIndex, pieceAtPoint },

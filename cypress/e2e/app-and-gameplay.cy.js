@@ -238,10 +238,14 @@ describe('Two users (at same computer) play a game', () => {
     // white forms a mill and takes a black
     cy.get('.point').eq(13).click();
     cy.get('.point').eq(12).click();
-    cy.get('.point').eq(10).click().get('.controls').find('.current-b');
-    // .get('.feedback')
-    // .children()
-    // .should('contain', 'flying');
+    cy.get('.point')
+      .eq(10)
+      .click()
+      .get('.controls')
+      .find('.current-b')
+      .get('.feedback')
+      .children()
+      .should('contain', 'flying');
 
     // BLACK IS FLYING
 
