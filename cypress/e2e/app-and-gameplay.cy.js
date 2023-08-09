@@ -262,11 +262,14 @@ describe('Two users (at same computer) play a game', () => {
 
     // white fails to move (only black is flying)
     cy.get('.point').eq(1).click();
-    cy.get('.point').eq(5).click().get('.controls').find('.current-w');
-    // .get('.feedback')
-    // .children()
-    // .should('contain', 'illegal');
-    // TODO add feedback
+    cy.get('.point')
+      .eq(5)
+      .click()
+      .get('.controls')
+      .find('.current-w')
+      .get('.feedback')
+      .children()
+      .should('contain', 'illegal');
 
     // white successfully moves, no mill
     cy.get('.point').eq(1).click();
@@ -300,16 +303,19 @@ describe('Two users (at same computer) play a game', () => {
     // black moves, forms mill, takes white, now white is flying
     cy.get('.point').eq(7).click();
     cy.get('.point').eq(6).click();
-    cy.get('.point').eq(12).click().get('.controls').find('.current-w');
-    // .get('.feedback')
-    // .children()
-    // .should('contain', 'flying');
-    // TODO add feedback
+    cy.get('.point')
+      .eq(12)
+      .click()
+      .get('.controls')
+      .find('.current-w')
+      .get('.feedback')
+      .children()
+      .should('contain', 'flying');
 
     // white moves, forms mill, takes black, wins
-    cy.get('.point').eq(17).click();
-    cy.get('.point').eq(1).click();
-    cy.get('.point').eq(11).click().get('.controls');
+    // cy.get('.point').eq(17).click();
+    // cy.get('.point').eq(1).click();
+    // cy.get('.point').eq(11).click().get('.controls');
     // .should('contain', 'restart')
     // .get('.feedback')
     // .children()

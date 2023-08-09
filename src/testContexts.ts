@@ -9,5 +9,6 @@ export const boardJustPriorToMovingPhase = {
       0, 0,
     ],
   },
+  numberOfPiecesPlaced: { w: 9, b: 8 },
   turn: 'b',
 };

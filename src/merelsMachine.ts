@@ -1,5 +1,5 @@
 import { meldDeepObj } from '@thi.ng/associative';
-import { assign, createMachine } from 'xstate';
+import { EventObject, assign, createMachine } from 'xstate';
 import {
   aplPlacePiece,
   aplRemovePiece,
@@ -36,7 +36,7 @@ type Context = {
   isFlying: WBBooleans;
   liftedAplIndex: number;
   numberOfPiecesPlaced: WBNums;
-  possiblePlaces: [];
+  possiblePlaces: number[];
   turn: Turn;
   userAction: Actions;
   userFeedback: string;
@@ -61,7 +61,14 @@ const defaultContext: Context = {
 
 const opponent = (x: Turn) => (x === 'w' ? 'b' : 'w');
 
-export const merelsMachine = createMachine(
+interface PointClickEvent extends EventObject {
+  type: 'point.click';
+  aplIndex: number;
+  pieceAtPoint: Turn | '';
+}
+
+export const merelsMachine = createMachine<Context, PointClickEvent>(
+  // export const merelsMachine = createMachine(
   {
     types: {} as { context: Context },
     context: ({ input }) => meldDeepObj(defaultContext, input),
@@ -183,7 +190,10 @@ export const merelsMachine = createMachine(
                   // TODO what about if there are no adjacent moves available? Will game be over already or will this state be stuck?
                   // ...correction... does it make more sense for a piece in this scenario to not have been lift-able in the first place..?
                   guard:
-                    'invalid place (occupied || (not flying && not adjacent))',
+                    'invalid move (occupied || (not flying && not adjacent))',
+                  actions: assign({
+                    userFeedback: () => 'illegal',
+                  }),
                   target: 'Lifting',
                   reenter: false,
                 },
@@ -237,6 +247,9 @@ export const merelsMachine = createMachine(
                     { type: 'remove' },
                     { type: 'set opponent to flying' },
                     { type: 'swap' },
+                    assign({
+                      userFeedback: () => 'flying',
+                    }),
                   ],
                   reenter: false,
                 },
@@ -384,7 +397,7 @@ export const merelsMachine = createMachine(
             (!areAdjacentMovesAvailable && !isFlying)
           );
         },
-      'invalid place (occupied || (not flying && not adjacent))': ({
+      'invalid move (occupied || (not flying && not adjacent))': ({
         context: { boards, possiblePlaces, turn },
         event: { aplIndex, pieceAtPoint },
       }) => {
