@@ -3,7 +3,6 @@ import { EventObject, assign, createMachine } from 'xstate';
 import {
   aplPlacePiece,
   aplRemovePiece,
-  // boardsToGridArray,
   getNumberOfMills,
   getNumberOfPieces,
   isIndexInMill,
@@ -12,9 +11,7 @@ import {
 import {
   aplIndexToMillIndex,
   areNonMillOpponentPiecesAvailable,
-  // areTherePossibleAdjacentMoves,
   connectedPointsGraph,
-  // gridIndexToAplIndex,
 } from './utility';
 
 export type Turn = 'w' | 'b';
@@ -73,8 +70,6 @@ interface PointClickEvent extends BaseEvent {
 
 interface RestartClickEvent extends BaseEvent {
   type: 'restart.click';
-  // aplIndex?: number;
-  // pieceAtPoint?: Turn | '';
 }
 
 type MyEvent = PointClickEvent | RestartClickEvent;
@@ -304,24 +299,19 @@ export const merelsMachine = createMachine(
     actions: {
       remove: assign({
         boards: ({ context: { boards, turn }, event }) => {
-          // TODO why do I have to narrow this type?
-          // seems related? https://github.com/statelyai/xstate/issues/3845
-          const clickEvent = event as PointClickEvent;
+          const { aplIndex } = event as PointClickEvent;
           return {
             ...boards,
-            [opponent(turn)]: aplRemovePiece(
-              boards[opponent(turn)],
-              clickEvent.aplIndex
-            ),
+            [opponent(turn)]: aplRemovePiece(boards[opponent(turn)], aplIndex),
           };
         },
       }),
       place: assign({
         boards: ({ context: { boards, turn }, event }) => {
-          const clickEvent = event as PointClickEvent;
+          const { aplIndex } = event as PointClickEvent;
           return {
             ...boards,
-            [turn]: aplPlacePiece(boards[turn], clickEvent.aplIndex),
+            [turn]: aplPlacePiece(boards[turn], aplIndex),
           };
         },
         numberOfPiecesPlaced: ({
@@ -333,26 +323,31 @@ export const merelsMachine = createMachine(
         userFeedback: () => '',
       }),
       move: assign({
-        boards: ({
-          context: { boards, liftedAplIndex, turn },
-          event: { aplIndex },
-        }) => ({
-          ...boards,
-          [turn]: aplPlacePiece(
-            aplRemovePiece(boards[turn], liftedAplIndex),
-            aplIndex
-          ),
-        }),
+        boards: ({ context: { boards, liftedAplIndex, turn }, event }) => {
+          const { aplIndex } = event as PointClickEvent;
+          return {
+            ...boards,
+            [turn]: aplPlacePiece(
+              aplRemovePiece(boards[turn], liftedAplIndex),
+              aplIndex
+            ),
+          };
+        },
         userFeedback: () => '',
       }),
       lift: assign({
-        liftedAplIndex: ({ event: { aplIndex } }) => aplIndex,
-        possiblePlaces: ({ context: { boards, turn }, event: { aplIndex } }) =>
-          openPointsAdjacentToPiece(
+        liftedAplIndex: ({ event }) => {
+          const { aplIndex } = event as PointClickEvent;
+          return aplIndex;
+        },
+        possiblePlaces: ({ context: { boards, turn }, event }) => {
+          const { aplIndex } = event as PointClickEvent;
+          return openPointsAdjacentToPiece(
             boards[turn],
             boards[opponent(turn)],
             connectedPointsGraph[aplIndex]
-          ),
+          );
+        },
         userFeedback: () => '',
       }),
       swap: assign({
@@ -366,13 +361,13 @@ export const merelsMachine = createMachine(
         }),
       }),
     },
-    actors: {},
     guards: {
-      'point is occupied': ({ event: { pieceAtPoint } }) => !!pieceAtPoint,
-      'mill is formed': ({
-        context: { boards, turn },
-        event: { aplIndex },
-      }) => {
+      'point is occupied': ({ event }) => {
+        const { pieceAtPoint } = event as PointClickEvent;
+        return !!pieceAtPoint;
+      },
+      'mill is formed': ({ context: { boards, turn }, event }) => {
+        const { aplIndex } = event as PointClickEvent;
         const previousNumberOfMills = getNumberOfMills(boards[turn]);
         const boardAfterPlace = aplPlacePiece(boards[turn], aplIndex);
         const newNumberOfMills = getNumberOfMills(boardAfterPlace);
@@ -381,10 +376,14 @@ export const merelsMachine = createMachine(
       },
       'invalid removal (empty point || occupied by self)': ({
         context: { turn },
-        event: { pieceAtPoint },
-      }) => pieceAtPoint !== opponent(turn),
+        event,
+      }) => {
+        const { pieceAtPoint } = event as PointClickEvent;
+        return pieceAtPoint !== opponent(turn);
+      },
       'invalid removal (occupied by opponent locked in mill && others are available)':
-        ({ context: { boards, turn }, event: { aplIndex } }) => {
+        ({ context: { boards, turn }, event }) => {
+          const { aplIndex } = event as PointClickEvent;
           const opponentBoard = boards[opponent(turn)];
           const playerClickedOnOpponentThatIsLockedInMill = !!isIndexInMill(
             opponentBoard,
@@ -410,22 +409,30 @@ export const merelsMachine = createMachine(
         18,
       'invalid lift (empty || occupied by opponent)': ({
         context: { turn },
-        event: { pieceAtPoint },
-      }) => pieceAtPoint !== turn,
+        event,
+      }) => {
+        const { pieceAtPoint } = event as PointClickEvent;
+        return pieceAtPoint !== turn;
+      },
       'invalid lift (not flying && piece has no adjacent moves possible)': ({
         context: { boards, turn },
-        event: { aplIndex },
-      }) =>
-        getNumberOfPieces(boards[turn]) > 3 &&
-        !openPointsAdjacentToPiece(
-          boards[turn],
-          boards[opponent(turn)],
-          connectedPointsGraph[aplIndex]
-        ).length,
+        event,
+      }) => {
+        const { aplIndex } = event as PointClickEvent;
+        return (
+          getNumberOfPieces(boards[turn]) > 3 &&
+          !openPointsAdjacentToPiece(
+            boards[turn],
+            boards[opponent(turn)],
+            connectedPointsGraph[aplIndex]
+          ).length
+        );
+      },
       'invalid move (occupied || (not flying && not adjacent))': ({
         context: { boards, possiblePlaces, turn },
-        event: { aplIndex, pieceAtPoint },
+        event,
       }) => {
+        const { aplIndex, pieceAtPoint } = event as PointClickEvent;
         const isOccupied = pieceAtPoint !== '';
         const isFlying = getNumberOfPieces(boards[turn]) === 3;
         const isAdjacent = possiblePlaces.includes(aplIndex);
@@ -434,9 +441,9 @@ export const merelsMachine = createMachine(
       },
       'no mill is formed': ({
         context: { boards, liftedAplIndex, turn },
-        event: { aplIndex },
+        event,
       }) => {
-        console.log('no mill is formed');
+        const { aplIndex } = event as PointClickEvent;
         const boardAfterRemoval = aplRemovePiece(boards[turn], liftedAplIndex);
         const previousNumberOfMills = getNumberOfMills(boardAfterRemoval);
 
@@ -453,6 +460,5 @@ export const merelsMachine = createMachine(
         context: { boards, turn },
       }) => getNumberOfPieces(boards[opponent(turn)]) - 1 === 3,
     },
-    delays: {},
   }
 );
