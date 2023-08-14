@@ -2,12 +2,12 @@
 
 ** Quick Start
 
-[[https://classic.yarnpkg.com/lang/en/][Yarn]], [[https://vitejs.dev/][Vite]].
+[[https://classic.yarnpkg.com/lang/en/][Yarn]], [[https://vitejs.dev/][Vite]], [[https://www.cypress.io/][Cypress]].
 
 #+begin_src sh
 yarn
 yarn start # localhost:5137
-tsc --no-emit # type check
+yarn cy:run
 
 yarn build
 yarn preview # localhost:4137 to check build
@@ -19,23 +19,24 @@ Auto-prettier with [[https://github.com/toplenboren/simple-git-hooks][simple-git
 
 *** APL
 
-[[http://archive.vector.org.uk/art10501160][Nick Nickolov's APL]] is hard-copied into ~lib/apl~, with a few helper functions cherry-picked from the [[https://gitlab.com/n9n/apl][GitLab repo]] into ~lib/aplLibraryHelpers.ts~. See ~lib/apl/license~ and ~lib/apl/readme.md~. My code calls the library and helpers from ~src/aplGameFunctions.ts~.
+[[http://archive.vector.org.uk/art10501160][Nick Nickolov's APL]] is copied into ~lib/apl~, with a few helper functions in ~lib/aplLibraryHelpers.ts~. See ~lib/apl/license~ and ~lib/apl/readme.md~. The merels application calls the APL library and helpers from ~src/aplGameFunctions.ts~ to translate between the "grid index" and "apl index" (see diagrams below), and update the pieces on the boards.
 
-*** TypeScript
+*** XState
 
-Note that ~allowSyntheticDefaultImports~ is set to ~true~ in ~tsconfig.json~ since ~lib/apl/apl.js~ is commonJS (~module.exports~).
+[[https://stately.ai/docs/xstate-v5/][XState]] manages the game's context (what is often thought of as application state), as well as the game's states (ex. Placing, Moving) and actions (ex. ~place~, ~move~). A visualization can be seen in [[https://stately.ai/docs/xstate-v5/studio][Stately Studio]] [[https://stately.ai/registry/editor/57155ae7-528b-48d2-8860-55f8719a5458?machineId=e1201a57-1ff8-4634-8466-c922d56533d9&mode=Design][here]].
 
 *** Umbrella
 
-[[https://github.com/thi-ng/umbrella/tree/develop/packages/atom][Atom]] manages game state (like [[https://clojure.org/reference/atoms][Clojure atoms]]), [[https://github.com/thi-ng/umbrella/tree/develop/packages/hdom][hdom]] manages the DOM, and [[https://github.com/thi-ng/umbrella/tree/develop/packages/paths][paths]] is an immutable nested object accessor/helper. If you're unfamiliar with [[https://github.com/thi-ng/umbrella/tree/develop/packages/hdom][umbrella]], take a look at it and [[https://thi.ng/][thi.ng]]. Incredible.
+Once the XState actor is created by interpreting the machine, Umbrella's [[https://github.com/thi-ng/umbrella/tree/develop/packages/rstream][rstream]] subscribes to the ongoing changes of the actor's context. [[https://github.com/thi-ng/umbrella/tree/develop/packages/rdom][rdom]] is used to compile a [[https://github.com/thi-ng/umbrella/tree/develop/packages/hiccup][hiccup]] tree, along with the streaming state, into the DOM.
 
 ** Rules
 
 - White starts, white & black alternate turns.
-- Phase 1: place one piece on the board in an open position.
-- If a mill is formed (three of your pieces in a row), remove an opponent piece. A piece in a mill cannot be removed unless no others are available.
-- After all pieces have been placed, phase 2 begins: move one piece to an adjacent location. Same form-a-mill-and-remove-an-opponent-piece rule applies.
-- Player reduced to two pieces or trapped with no legal moves loses.
+- Phase 1: place one piece on the board in an open point.
+- If a mill is formed (three of your pieces in a row), remove an opponent piece. An opponent's piece that is locked in a mill cannot be removed unless no others are available.
+- After all pieces have been placed, phase 2 begins: move one piece to an adjacent unoccupied point. Same form-a-mill-and-remove-an-opponent-piece rule applies.
+- When a player has only 3 pieces remaining, their pieces are now "flying" and can move to any open point instead of only adjacent points.
+- The player reduced to two pieces or trapped with no legal moves loses.
 
 ** Board
 
@@ -49,6 +50,16 @@ Possible piece positions:
 0  0  1  1  1  0  0
 0  1  0  1  0  1  0
 1  0  0  1  0  0  1
+#+end_src
+
+#+begin_src
+1        1        1
+   1     1     1
+      1  1  1
+1  1  1     1  1  1
+      1  1  1
+   1     1     1
+1        1        1
 #+end_src
 
 Grid index:
@@ -85,6 +96,16 @@ Apl index shown on the board:
      24 25 26
   15    16    17
 6       7        8
+#+end_src
+
+#+begin_src
+0     1     2    -       -       -    -      -       -
+  -   -   -        9     10   11        -    -     -
+    - - -             -  -  -             18 19 20
+3 - -   - - 5    - 12 -     - 14 -    - - 21    23 - -
+    - - -             -  -  -             24 25 26
+  -   -   -        15    16   17        -    -     -
+6     7     8    -       -       -    -      -       -
 #+end_src
 
 Apl index:
