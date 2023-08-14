@@ -13,11 +13,7 @@
     "start": "vite"
   },
   "dependencies": {
-    "@thi.ng/api": "^8.4.5",
     "@thi.ng/associative": "^6.2.40",
-    "@thi.ng/atom": "^5.1.21",
-    "@thi.ng/hdom": "^9.1.24",
-    "@thi.ng/paths": "^5.1.21",
     "@thi.ng/rdom": "^0.11.4",
     "@thi.ng/rstream": "^8.0.4",
     "@thi.ng/transducers": "^8.4.6",
