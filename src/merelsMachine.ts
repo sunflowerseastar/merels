@@ -17,7 +17,7 @@ import {
   // gridIndexToAplIndex,
 } from './utility';
 
-type Turn = 'w' | 'b';
+export type Turn = 'w' | 'b';
 type Actions = 'place' | 'lift' | 'remove' | 'end';
 export interface Boards {
   w: number[];

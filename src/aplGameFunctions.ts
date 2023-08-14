@@ -1,7 +1,7 @@
 import libraryApl from '../lib/apl/apl';
 import { fmt } from '../lib/aplLibraryHelpers';
 import { Board } from './utility';
-import { Boards } from './index';
+import { Boards } from './merelsMachine';
 
 export const aplToJs = (aplResult: string) =>
   fmt(aplResult)[0]
