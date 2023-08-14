@@ -20,12 +20,12 @@
     "xstate": "^5.0.0-beta.21"
   },
   "devDependencies": {
-    "cypress": "^12.15.0",
-    "lint-staged": "^13.2.2",
-    "prettier": "^2.8.8",
-    "simple-git-hooks": "^2.8.1",
+    "cypress": "^12.17.3",
+    "lint-staged": "^14.0.0",
+    "prettier": "^3.0.1",
+    "simple-git-hooks": "^2.9.0",
     "typescript": "^5.1.6",
-    "vite": "^4.3.9"
+    "vite": "^4.4.9"
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged"
