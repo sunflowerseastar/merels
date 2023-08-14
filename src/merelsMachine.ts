@@ -61,16 +61,30 @@ const defaultContext: Context = {
 
 const opponent = (x: Turn) => (x === 'w' ? 'b' : 'w');
 
-interface PointClickEvent extends EventObject {
-  // TODO figure out this
-  type: 'point.click' | 'restart.click';
+interface BaseEvent extends EventObject {
+  type: string;
+}
+
+interface PointClickEvent extends BaseEvent {
+  type: 'point.click';
   aplIndex: number;
   pieceAtPoint: Turn | '';
 }
 
-export const merelsMachine = createMachine<Context, PointClickEvent>(
+interface RestartClickEvent extends BaseEvent {
+  type: 'restart.click';
+  // aplIndex?: number;
+  // pieceAtPoint?: Turn | '';
+}
+
+type MyEvent = PointClickEvent | RestartClickEvent;
+
+export const merelsMachine = createMachine(
   {
-    types: {} as { context: Context },
+    types: {} as {
+      context: Context;
+      events: MyEvent;
+    },
     context: ({ input }) => meldDeepObj(defaultContext, input),
     id: 'merels_statechart',
     initial: 'Placing',
@@ -277,6 +291,7 @@ export const merelsMachine = createMachine<Context, PointClickEvent>(
             }),
             on: {
               'restart.click': {
+                actions: assign(() => defaultContext),
                 target: '#merels_statechart',
               },
             },
@@ -288,16 +303,27 @@ export const merelsMachine = createMachine<Context, PointClickEvent>(
   {
     actions: {
       remove: assign({
-        boards: ({ context: { boards, turn }, event: { aplIndex } }) => ({
-          ...boards,
-          [opponent(turn)]: aplRemovePiece(boards[opponent(turn)], aplIndex),
-        }),
+        boards: ({ context: { boards, turn }, event }) => {
+          // TODO why do I have to narrow this type?
+          // seems related? https://github.com/statelyai/xstate/issues/3845
+          const clickEvent = event as PointClickEvent;
+          return {
+            ...boards,
+            [opponent(turn)]: aplRemovePiece(
+              boards[opponent(turn)],
+              clickEvent.aplIndex
+            ),
+          };
+        },
       }),
       place: assign({
-        boards: ({ context: { boards, turn }, event: { aplIndex } }) => ({
-          ...boards,
-          [turn]: aplPlacePiece(boards[turn], aplIndex),
-        }),
+        boards: ({ context: { boards, turn }, event }) => {
+          const clickEvent = event as PointClickEvent;
+          return {
+            ...boards,
+            [turn]: aplPlacePiece(boards[turn], clickEvent.aplIndex),
+          };
+        },
         numberOfPiecesPlaced: ({
           context: { numberOfPiecesPlaced, turn },
         }) => ({

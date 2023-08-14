@@ -371,8 +371,6 @@ $compile([
         'p.reset',
         {
           onclick: () => {
-            // TODO figure out this
-            // TODO then figure out how to reset the state on restart
             actor.send({
               type: 'restart.click',
             });

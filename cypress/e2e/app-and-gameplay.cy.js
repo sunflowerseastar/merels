@@ -327,13 +327,13 @@ describe('Two users (at same computer) play a game', () => {
       .get('.feedback')
       .children()
       .should('contain', 'white wins');
-    // TODO remove the last one
-    // TODO add feedback 'white wins'
 
     // restart
-    // TODO add restart
-    // cy.get('.controls').find('.reset').click();
-    // cy.get('.controls').find('.current-w');
-    // cy.get('.controls').find('.action').children().should('contain', 'place');
+    cy.get('.controls').find('.reset').click();
+    cy.get('.controls').find('.current-w');
+    cy.get('.controls').find('.action').children().should('contain', 'place');
+
+    cy.get('.point').eq(0).as('point').click();
+    cy.get('@point').find('span').should('have.class', 'w');
   });
 });
