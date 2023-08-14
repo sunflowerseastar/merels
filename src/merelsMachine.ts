@@ -39,7 +39,7 @@ type Context = {
   userFeedback: string;
 };
 
-const defaultContext: Context = {
+export const defaultContext: Context = {
   boards: {
     w: Array.from(Array(27), (_) => 0),
     b: Array.from(Array(27), (_) => 0),

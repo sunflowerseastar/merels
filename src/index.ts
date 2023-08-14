@@ -2,7 +2,7 @@ import { $compile, $klist } from '@thi.ng/rdom';
 import { indexed } from '@thi.ng/transducers';
 import { reactive } from '@thi.ng/rstream';
 import { interpret } from 'xstate';
-import { Turn, merelsMachine } from './merelsMachine';
+import { Turn, defaultContext, merelsMachine } from './merelsMachine';
 
 import { boardsToGridArray } from './aplGameFunctions';
 import { gridIndexToAplIndex } from './utility';
@@ -12,19 +12,24 @@ const actor = interpret(merelsMachine, {
   // input: boardJustPriorToMovingPhase,
 }).start();
 
-const actorBoards = actor.getSnapshot().context.boards;
-const boards = reactive(actorBoards);
-const actorTurn = actor.getSnapshot().context.turn;
-const turn = reactive(actorTurn);
+// set up the reactives' initial values
+const {
+  boards: initialBoards,
+  turn: initialTurn,
+  userAction: initialUserAction,
+  userFeedback: initialUserFeedback,
+} = defaultContext;
+const boards = reactive(initialBoards);
+const turn = reactive(initialTurn);
+const userAction = reactive(initialUserAction);
+const userFeedback = reactive(initialUserFeedback);
 
-const userAction = reactive(actor.getSnapshot().context.userAction);
-const userFeedback = reactive(actor.getSnapshot().context.userFeedback);
-
-actor.subscribe((snapshot) => {
-  boards.next(snapshot.context.boards);
-  turn.next(snapshot.context.turn);
-  userAction.next(snapshot.context.userAction);
-  userFeedback.next(snapshot.context.userFeedback);
+// update the reactives as the context changes
+actor.subscribe(({ context }) => {
+  boards.next(context.boards);
+  turn.next(context.turn);
+  userAction.next(context.userAction);
+  userFeedback.next(context.userFeedback);
 });
 
 const boardView = $klist(
