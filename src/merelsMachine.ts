@@ -118,7 +118,7 @@ export const merelsMachine = createMachine(
                   reenter: true,
                 },
                 {
-                  target: '#merels_statechart.Moving.Lifting',
+                  target: '#merels_statechart.Moving.Check Available Moves',
                   actions: [{ type: 'place' }, { type: 'swap' }],
                   reenter: false,
                 },
@@ -154,7 +154,7 @@ export const merelsMachine = createMachine(
                 },
                 {
                   actions: [{ type: 'remove' }, { type: 'swap' }],
-                  target: '#merels_statechart.Moving.Lifting',
+                  target: '#merels_statechart.Moving.Check Available Moves',
                   reenter: false,
                 },
               ],
@@ -163,9 +163,21 @@ export const merelsMachine = createMachine(
         },
       },
       Moving: {
-        description: 'Standard gameplay: players alternate turns to adjacently move a piece with formed-a-mill removals; player non-adjacently "flies" with 3 pieces remaining, and loses with 2 pieces remaining or no legal moves available.',
-        initial: 'Lifting',
+        description:
+          'Standard gameplay: players alternate turns to adjacently move a piece with formed-a-mill removals; player non-adjacently "flies" with 3 pieces remaining, and loses with 2 pieces remaining or no legal moves available.',
+        initial: 'Check Available Moves',
         states: {
+          'Check Available Moves': {
+            always: [
+              {
+                target: 'Active player wins, Opponent loses',
+                guard: 'not flying && no adjacent moves are available',
+                actions: { type: 'end' },
+                reenter: false,
+              },
+              { target: 'Lifting', reenter: false },
+            ],
+          },
           Lifting: {
             // TODO if the current player has no legal moves, they lose (do I put a guard with an action for the Lifting state?)
             entry: assign({
@@ -329,7 +341,7 @@ export const merelsMachine = createMachine(
             ...boards,
             [turn]: aplPlacePiece(
               aplRemovePiece(boards[turn], liftedAplIndex),
-              aplIndex
+              aplIndex,
             ),
           };
         },
@@ -345,7 +357,7 @@ export const merelsMachine = createMachine(
           return openPointsAdjacentToPiece(
             boards[turn],
             boards[opponent(turn)],
-            connectedPointsGraph[aplIndex]
+            connectedPointsGraph[aplIndex],
           );
         },
         userFeedback: () => '',
@@ -387,7 +399,7 @@ export const merelsMachine = createMachine(
           const opponentBoard = boards[opponent(turn)];
           const playerClickedOnOpponentThatIsLockedInMill = !!isIndexInMill(
             opponentBoard,
-            aplIndexToMillIndex[aplIndex]
+            aplIndexToMillIndex[aplIndex],
           );
           const areOtherRemovablePiecesAvailable =
             areNonMillOpponentPiecesAvailable(opponentBoard);
@@ -424,7 +436,7 @@ export const merelsMachine = createMachine(
           !openPointsAdjacentToPiece(
             boards[turn],
             boards[opponent(turn)],
-            connectedPointsGraph[aplIndex]
+            connectedPointsGraph[aplIndex],
           ).length
         );
       },
@@ -459,6 +471,12 @@ export const merelsMachine = createMachine(
       'opponent has 3 pieces remaining after removal': ({
         context: { boards, turn },
       }) => getNumberOfPieces(boards[opponent(turn)]) - 1 === 3,
+      'not flying && no adjacent moves are available': ({
+        context: { boards, turn },
+      }) => {
+        console.log('boards, turn', boards, turn);
+        return false;
+      },
     },
-  }
+  },
 );
