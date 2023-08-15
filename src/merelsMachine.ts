@@ -86,7 +86,7 @@ export const merelsMachine = createMachine(
     states: {
       Placing: {
         description:
-          'Placing the initial 18 places, alternate turns, along with mill-forming removals',
+          'Introductory gameplay: players alternate turns by individually placing the 18 pieces, removing an opponent piece after forming a mill.',
         initial: 'Placing',
         states: {
           Placing: {
@@ -163,7 +163,7 @@ export const merelsMachine = createMachine(
         },
       },
       Moving: {
-        description: 'This is a _state description_.',
+        description: 'Standard gameplay: players alternate turns to adjacently move a piece with formed-a-mill removals; player non-adjacently "flies" with 3 pieces remaining, and loses with 2 pieces remaining or no legal moves available.',
         initial: 'Lifting',
         states: {
           Lifting: {
