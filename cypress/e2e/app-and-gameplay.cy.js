@@ -1,6 +1,6 @@
 /// <reference types="Cypress" />
 describe('Two users (at same computer) play a game', () => {
-  before(() => {
+  beforeEach(() => {
     cy.visit('/');
   });
 
@@ -335,5 +335,43 @@ describe('Two users (at same computer) play a game', () => {
 
     cy.get('.point').eq(0).as('point').click();
     cy.get('@point').find('span').should('have.class', 'w');
+  });
+
+  it('can lose a game because there are no valid available moves', () => {
+    cy.get('.point').eq(1).as('point').click();
+    cy.get('.point').eq(2).as('point').click();
+
+    cy.get('.point').eq(5).as('point').click();
+    cy.get('.point').eq(3).as('point').click();
+
+    cy.get('.point').eq(8).as('point').click();
+    cy.get('.point').eq(4).as('point').click();
+
+    cy.get('.point').eq(10).as('point').click();
+    cy.get('.point').eq(6).as('point').click();
+
+    cy.get('.point').eq(14).as('point').click();
+    cy.get('.point').eq(7).as('point').click();
+
+    cy.get('.point').eq(15).as('point').click();
+    cy.get('.point').eq(11).as('point').click();
+
+    cy.get('.point').eq(16).as('point').click();
+    cy.get('.point').eq(12).as('point').click();
+
+    cy.get('.point').eq(18).as('point').click();
+    cy.get('.point').eq(13).as('point').click();
+
+    cy.get('.point').eq(20).as('point').click();
+    cy.get('.point').eq(17).as('point').click();
+
+    cy.get('.point').eq(18).as('point').click();
+    cy.get('.point').eq(19).as('point').click();
+    // TODO add game-end state for 'no valid moves available'
+    // .get('.controls')
+    // .should('contain', 'restart')
+    // .get('.feedback')
+    // .children()
+    // .should('contain', 'white wins');
   });
 });
