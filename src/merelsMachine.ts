@@ -11,6 +11,7 @@ import {
 import {
   aplIndexToMillIndex,
   areNonMillOpponentPiecesAvailable,
+  areTherePossibleAdjacentMoves,
   connectedPointsGraph,
 } from './utility';
 
@@ -63,9 +64,9 @@ interface BaseEvent extends EventObject {
 }
 
 interface PointClickEvent extends BaseEvent {
-  type: 'point.click';
   aplIndex: number;
   pieceAtPoint: Turn | '';
+  type: 'point.click';
 }
 
 interface RestartClickEvent extends BaseEvent {
@@ -170,7 +171,7 @@ export const merelsMachine = createMachine(
           'Check Available Moves': {
             always: [
               {
-                target: 'Active player wins, Opponent loses',
+                target: 'Active player loses, Opponent wins',
                 guard: 'not flying && no adjacent moves are available',
                 actions: { type: 'end' },
                 reenter: false,
@@ -179,7 +180,6 @@ export const merelsMachine = createMachine(
             ],
           },
           Lifting: {
-            // TODO if the current player has no legal moves, they lose (do I put a guard with an action for the Lifting state?)
             entry: assign({
               userAction: 'lift',
             }),
@@ -215,8 +215,6 @@ export const merelsMachine = createMachine(
             on: {
               'point.click': [
                 {
-                  // TODO what about if there are no adjacent moves available? Will game be over already or will this state be stuck?
-                  // ...correction... does it make more sense for a piece in this scenario to not have been lift-able in the first place..?
                   guard:
                     'invalid move (occupied || (not flying && not adjacent))',
                   actions: assign({
@@ -228,7 +226,7 @@ export const merelsMachine = createMachine(
                 {
                   guard: 'no mill is formed',
                   actions: [{ type: 'move' }, { type: 'swap' }],
-                  target: 'Lifting',
+                  target: 'Check Available Moves',
                   reenter: false,
                 },
                 {
@@ -265,7 +263,7 @@ export const merelsMachine = createMachine(
                   guard:
                     'opponent has more than 3 pieces remaining after removal',
                   actions: [{ type: 'remove' }, { type: 'swap' }],
-                  target: 'Lifting',
+                  target: 'Check Available Moves',
                   reenter: false,
                 },
                 {
@@ -282,19 +280,19 @@ export const merelsMachine = createMachine(
                   reenter: false,
                 },
                 {
-                  target: 'Active player wins, Opponent loses',
-                  actions: [{ type: 'remove' }],
+                  target: 'Active player loses, Opponent wins',
+                  actions: [{ type: 'remove' }, { type: 'swap' }],
                   reenter: false,
                 },
               ],
             },
           },
-          'Active player wins, Opponent loses': {
+          'Active player loses, Opponent wins': {
             type: 'final',
             entry: assign({
               userAction: 'end',
               userFeedback: ({ context: { turn } }) =>
-                `${turn === 'w' ? 'white' : 'black'} wins`,
+                `${turn === 'w' ? 'black' : 'white'} wins`,
             }),
             on: {
               'restart.click': {
@@ -458,10 +456,8 @@ export const merelsMachine = createMachine(
         const { aplIndex } = event as PointClickEvent;
         const boardAfterRemoval = aplRemovePiece(boards[turn], liftedAplIndex);
         const previousNumberOfMills = getNumberOfMills(boardAfterRemoval);
-
         const boardAfterMove = aplPlacePiece(boardAfterRemoval, aplIndex);
         const newNumberOfMills = getNumberOfMills(boardAfterMove);
-
         const noMillIsFormed = newNumberOfMills === previousNumberOfMills;
         return noMillIsFormed;
       },
@@ -474,8 +470,12 @@ export const merelsMachine = createMachine(
       'not flying && no adjacent moves are available': ({
         context: { boards, turn },
       }) => {
-        console.log('boards, turn', boards, turn);
-        return false;
+        const isFlying = getNumberOfPieces(boards[turn]) === 3;
+        const upcomingPlayerHasAdjacentMoves = areTherePossibleAdjacentMoves(
+          boards[turn],
+          boards[opponent(turn)],
+        );
+        return !isFlying && !upcomingPlayerHasAdjacentMoves;
       },
     },
   },

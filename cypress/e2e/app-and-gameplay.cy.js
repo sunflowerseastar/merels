@@ -366,12 +366,14 @@ describe('Two users (at same computer) play a game', () => {
     cy.get('.point').eq(17).as('point').click();
 
     cy.get('.point').eq(18).as('point').click();
-    cy.get('.point').eq(19).as('point').click();
-    // TODO add game-end state for 'no valid moves available'
-    // .get('.controls')
-    // .should('contain', 'restart')
-    // .get('.feedback')
-    // .children()
-    // .should('contain', 'white wins');
+    cy.get('.point')
+      .eq(19)
+      .as('point')
+      .click()
+      .get('.controls')
+      .should('contain', 'restart')
+      .get('.feedback')
+      .children()
+      .should('contain', 'white wins');
   });
 });
