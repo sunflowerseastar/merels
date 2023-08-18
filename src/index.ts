@@ -6,10 +6,18 @@ import { Turn, defaultContext, merelsMachine } from './merelsMachine';
 
 import { boardsToGridArray } from './aplGameFunctions';
 import { gridIndexToAplIndex } from './utility';
-// import { boardJustPriorToMovingPhase } from './testContexts';
+// import {
+//   boardJustBeforeMovingState,
+//   boardJustBeforeWhiteIsFlying,
+//   boardWithFourBlack,
+//   whiteHasFormedAMillAndRemovedABlack,
+// } from './boardsAndContextsForTesting';
 
 const actor = interpret(merelsMachine, {
-  // input: boardJustPriorToMovingPhase,
+  // input: boardJustBeforeMovingState,
+  // input: boardJustBeforeWhiteIsFlying,
+  // input: boardWithFourBlack,
+  // input: whiteHasFormedAMillAndRemovedABlack,
 }).start();
 
 // set up the reactives' initial values
@@ -58,7 +66,7 @@ const boardView = $klist(
         ]
       : ['span', {}, ''];
   },
-  ([i, x]) => `${i}${x}`
+  ([i, x]) => `${i}${x}`,
 );
 
 $compile([
