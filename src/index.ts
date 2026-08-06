@@ -5,6 +5,7 @@ import { interpret } from 'xstate';
 import { Turn, defaultContext, merelsMachine } from './merelsMachine';
 
 import { boardsToGridArray } from './aplGameFunctions';
+import { createTheme } from './theme';
 import { gridIndexToAplIndex } from './utility';
 // import {
 //   boardJustBeforeMovingState,
@@ -39,6 +40,25 @@ actor.subscribe(({ context }) => {
   userAction.next(context.userAction);
   userFeedback.next(context.userFeedback);
 });
+
+const { theme, cycleTheme } = createTheme();
+
+// reuses the board's point circle: unfilled for dark, filled for light,
+// half-filled for system
+const themeView = [
+  'div.theme-control',
+  {},
+  [
+    'button.point.theme-toggle',
+    {
+      type: 'button',
+      'data-theme-choice': theme,
+      title: theme.map((theme) => `theme: ${theme}`),
+      'aria-label': theme.map((theme) => `theme: ${theme}`),
+      onclick: cycleTheme,
+    },
+  ],
+];
 
 const boardView = $klist(
   boards.map((board) => [...indexed(0, boardsToGridArray(board))]),
@@ -110,4 +130,5 @@ $compile([
     ],
     ['p.feedback', {}, userFeedback],
   ],
+  themeView,
 ]).mount(document.body);

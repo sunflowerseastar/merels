@@ -1,10 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <title>merels</title>
     <meta charset="utf-8" />
     <link href="style.css" rel="stylesheet" />
     <link rel="shortcut icon" href="favicon.png" />
+    <script>
+      (function () {
+        var themes = ['system', 'dark', 'light'];
+        var query = new URLSearchParams(location.search).get('theme');
+        var stored = null;
+        try {
+          stored = localStorage.getItem('theme');
+        } catch (e) {}
+        var theme =
+          themes.indexOf(query) > -1
+            ? query
+            : themes.indexOf(stored) > -1
+            ? stored
+            : 'system';
+        document.documentElement.dataset.theme =
+          theme === 'system'
+            ? matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light'
+            : theme;
+      })();
+    </script>
   </head>
   <body>
     <script type="module" src="src/index.ts"></script>
